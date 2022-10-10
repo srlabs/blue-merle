@@ -1,0 +1,134 @@
+#!/bin/sh
+
+. /lib/blue-merle/functions.sh
+
+if [ ! -c "/dev/ttyUSB3" ]; then
+	echo "Error: /dev/ttyUSB3 does not exist."
+	echo "Please reboot and contact the maintainer if the problem persists."
+	exit 1;
+fi
+
+echo -n "Swap SIM card and update IMEI? (Y/n): "
+read answer
+case $answer in
+	n*) answer=0;;
+	N*) answer=0;;
+	*) answer=1;;
+esac
+if [[ "$answer" -eq 0 ]]; then
+	exit 1;
+fi
+
+
+echo "Disabling the ME from both transmitting and receiving RF signals..."
+
+old_imei=$(READ_IMEI)
+old_imsi=$(READ_IMSI)
+
+answer=1
+while [[ "$answer" -eq 1 ]]; do
+	gl_modem AT AT+CFUN=4 | grep -q OK
+	if [[ $? -eq 1 ]]; then
+		echo -n "...failed. Try again? (Y/n): "
+		read answer
+		case $answer in
+			n*) answer=0;;
+			N*) answer=0;;
+			*) answer=1;;
+		esac
+		if [[ $answer -eq 0 ]]; then
+			exit 1
+		fi
+	else
+		answer=0
+	fi
+done
+
+echo -n "Please now replace the SIM card and press any key to continue. "
+read answer
+
+leak=0
+
+until gl_modem AT AT+CFUN=0 | grep -q OK
+do
+	sleep 1
+	echo "CFUN=0 failed. Trying again."
+done
+
+until gl_modem AT AT+CFUN=4 | grep -q OK
+do
+	leak=1
+	echo "CFUN=4 failed. Trying again."
+done
+
+if [[ $leak -eq 1 ]]; then
+	echo
+	echo "WARNING: Reset took longer than expected."
+	echo
+fi
+
+sleep 1
+
+new_imsi=$(READ_IMSI)
+
+if [[ "$old_imsi" == "$new_imsi" ]]; then
+	echo
+	echo "WARNING: Old IMSI equals new IMSI."
+	echo
+fi
+
+echo -n "Would you like to set a random (r) or deterministic (d) IMEI? (R/d): " 
+read answer                                      
+case $answer in                                  
+        d*) answer=0;;
+        D*) answer=0;;
+        *) answer=1;;
+esac                                            
+if [[ "$answer" -eq 1 ]]; then                  
+	python3 /lib/blue-merle/imei_generate.py -r
+else
+	python3 /lib/blue-merle/imei_generate.py -d
+fi   
+
+new_imei=$(READ_IMEI)
+
+if [[ "$old_imei" == "$new_imei" ]]; then
+	echo
+	echo "WARNING: Old IMEI equals new IMEI."
+	echo
+else
+	mkdir -p /tmp/modem.1-1.2
+	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
+fi
+
+echo "You should now reset the modem or shutdown the device."
+echo "For extra privacy, you should shutdown the device and change your location."
+echo
+echo -n "Would you like to shutdown the device (s) or reset the modem (m)? (S/m): "
+read answer
+case $answer in
+	m*) answer=0;;
+	M*) answer=0;;
+	*) answer=1;;
+esac
+if [[ "$answer" -eq 1 ]]; then
+	echo {\"poweroff\": \"1\"} >/tmp/mcu_message && sleep 0.5 && killall -17 e750-mcu
+else
+	echo "Resetting modem..."
+	until gl_modem AT AT+QPOWD | grep -q OK
+	do
+		echo "Resetting modem failed. Trying again."
+		sleep 1
+	done 
+	
+	time_start=$(date +%s)
+	until imsi=$(gl_modem AT AT+CIMI | grep -w -E "[0-9]{6,15}")
+	do
+		time_now=$(date +%s)
+		echo -ne "Waiting for reset to complete. ($(($time_now-$time_start))s/30s)\r"
+		sleep 1
+	done
+	echo
+	echo "FIN"
+fi
+	

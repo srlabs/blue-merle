@@ -1,0 +1,7 @@
+if [ "$1" = "on" ];then
+	echo "on" > /tmp/sim_change_switch
+elif [ "$1" = "off" ];then
+	echo "off" > /tmp/sim_change_switch
+else
+	echo "off" > /tmp/sim_change_switch
+fi

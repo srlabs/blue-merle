@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+. /lib/blue-merle/functions.sh
+
+START=81
+STOP=99
+ 
+start() {        
+	/lib/blue-merle/mac-wipe.sh
+	CHECKMACSYMLINK
+	RESET_BSSIDS
+}                 
+ 
+stop() {          
+	/lib/blue-merle/mac-wipe.sh
+}
+

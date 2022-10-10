@@ -1,0 +1,23 @@
+--- orig/switch_queue
++++ patch/switch_queue
+@@ -81,6 +81,10 @@
+ 			"tor")
+ 				e750-mcu "                Turning TOR ON"
+ 			;;
++			"sim")
++#				e750-mcu "                Starting SIM swap"
++				blue-merle-switch&
++			;;
+ 			"*")
+ 			;;
+ 		esac
+@@ -98,6 +102,9 @@
+ 				check_other_vpn tor
+ 				e750-mcu "                Turning TOR OFF"
+ 			;;
++			"sim")
++#				e750-mcu "                Stopping SIM swap"
++			;;
+ 			"*")
+ 			;;
+ 		esac

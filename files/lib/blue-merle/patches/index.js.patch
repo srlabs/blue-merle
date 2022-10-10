@@ -1,0 +1,41 @@
+--- orig/index.js
++++ patch/index.js
+@@ -6,7 +6,7 @@
+         data: function data() {
+             return {
+                 isShow: false,
+-                chooseState: ["No function (default)", "WireGuard® Client Toggle (On/Off)", "OpenVPN Client Toggle (On/Off)"],
++                chooseState: ["No function (default)", "WireGuard® Client Toggle (On/Off)", "OpenVPN Client Toggle (On/Off)", "SIM Change (Start/Stop)"],
+                 // chooseState4G: ["No function (default)", "WireGuard® Client Toggle (On/Off)", "OpenVPN Client Toggle (On/Off)", ],
+                 param: "",
+                 btnStatus: true,
+@@ -79,6 +79,9 @@
+                     case "Tor Toggle (On/Off)":
+                         status = "tor";
+                         break;
++                    case "SIM Change (Start/Stop)":
++                        status="sim";
++                        break;
+                 }
+                 return status;
+             },
+@@ -108,6 +111,9 @@
+                         case "tor":
+                             _this.param = "Tor Toggle (On/Off)";
+                             break;
++                        case "sim":
++                            _this.param = "SIM Change (Start/Stop)";
++                            break;
+                     }
+                 }
+             });
+@@ -170,6 +176,9 @@
+                     case 'tor':
+                         _this.openSetting();
+                         break;
++                    case 'sim':
++                        _this.openSetting();
++                        break;
+                 }
+             },
+             openSetting: function openSetting() {

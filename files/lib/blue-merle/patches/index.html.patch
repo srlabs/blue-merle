@@ -1,0 +1,39 @@
+--- orig/index.html
++++ patch/index.html
+@@ -6,7 +6,7 @@
+                     <span class="circle active"></span>
+                     <span>{{t($lang.setting.btnSetting)}}</span>
+                 </h4>
+-                <gl-btn type="purple" class="pull-right moblieBtnLate" @click="checkType" :disabled="btnStatus">{{t($lang.button.apply)}}</gl-btn>
++                <gl-btn type="purple" class="pull-right moblieBtnLate" @click="checkType" :disabled="true">{{t($lang.button.apply)}}</gl-btn>
+             </div>
+             <div class="panel-body panel-status">
+                 <span class="setting-box clearfix list-group">
+@@ -64,6 +64,20 @@
+                                 </div>
+                             </div>
+                         </div>
++
++                        <div v-show="parstatus=='sim'">
++                            <div style="width:47%; display:inline-block;vertical-align:top;">
++                                <div id="title_left" style=" font-weight:bold">SIM Change Start</div>
++                                <div id="content_left" class="content_switch">{{'SIM change will be initiated'}}.
++                                </div>
++                            </div>
++                            <div style="width:47%; display:inline-block;vertical-align:top">
++                                <div id="title_right" style="font-weight:bold">SIM Change Stop</div>
++                                <div id="content_right" class="content_switch">
++                                </div>
++                            </div>
++                        </div>
++
+                     </div>
+                     <div style="display:none">
+                         <label class="div-help-title">{{t($lang.setting.diy)}}</label>
+@@ -84,4 +98,4 @@
+ 
+         </div>
+     </div>
+-</div>
+\ No newline at end of file
++</div>
