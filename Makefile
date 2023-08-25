@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -96,13 +96,27 @@ define Package/blue-merle/preinst
 		}
 
 	if grep -q "GL.iNet GL-E750" /proc/cpuinfo; then
-		if grep -q -w "3.215" /etc/glversion; then
-			CHECK_MCUVERSION
-			echo "Device is supported, installing blue-merle."
-			exit 0
-		else
-			ABORT_GLVERSION
-		fi
+	    GL_VERSION=$$(cat /etc/glversion)
+	    case $$GL_VERSION in
+	        4.*)
+	            echo Version $$GL_VERSION is not supported
+	            exit 1
+	            ;;
+	        3.125)
+	            echo Version $$GL_VERSION is supported
+	            CHECK_MCUVERSION
+	            exit 0
+	            ;;
+	        3.*)
+	            echo Version $$GL_VERSION is *probably* supported
+	            ABORT_GLVERSION
+	            ;;
+	        *)
+	            echo Unknown version $$GL_VERSION
+	            ABORT_GLVERSION
+	            ;;
+        esac
+        CHECK_MCUVERSION
 	else
 		ABORT_GLVERSION
 	fi
