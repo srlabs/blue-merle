@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.0.3
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/blue-merle
 	SECTION:=utils
 	CATEGORY:=Utilities
-	DEPENDS:=+bash +coreutils-shred +python3 +python3-pyserial +patch
+	DEPENDS:=gl-ui gl-e750-mcu +bash +coreutils-shred +python3 +python3-pyserial +patch
 	TITLE:=Anonymity Enhancements for GL-E750 Mudi
 endef
 
