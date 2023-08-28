@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -102,7 +102,7 @@ define Package/blue-merle/preinst
 	            echo Version $$GL_VERSION is not supported
 	            exit 1
 	            ;;
-	        3.125)
+	        3.215)
 	            echo Version $$GL_VERSION is supported
 	            CHECK_MCUVERSION
 	            exit 0
