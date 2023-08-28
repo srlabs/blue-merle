@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.0.1
+PKG_VERSION:=1.0.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -144,8 +144,8 @@ define Package/blue-merle/postrm
 	mv /usr/bin/switchaction.orig /usr/bin/switchaction
 	mv /usr/bin/switch_queue.orig /usr/bin/switch_queue
 
-	rm /tmp/sim_change_start
-	rm /tmp/sim_change_switch
+	rm -f /tmp/sim_change_start
+	rm -f /tmp/sim_change_switch
 endef
 $(eval $(call BuildPackage,$(PKG_NAME)))
 
