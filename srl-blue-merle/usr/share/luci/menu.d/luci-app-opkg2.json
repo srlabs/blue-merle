@@ -1,0 +1,13 @@
+{
+	"admin/system/opkg2": {
+		"title": "Software",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "opkg2"
+		},
+		"depends": {
+			"acl": [ "luci-app-opkg2" ]
+		}
+	}
+}
