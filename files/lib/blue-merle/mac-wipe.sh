@@ -47,7 +47,7 @@ else
 	echo "No file found within /tmp/tertf. No shredding to be done there."
 fi
 
-# shredding /etc/tertf, , rm for good measure
+# shredding /etc/tertf, rm for good measure
 if [ -f "$etc_file" ]; then
 	echo "Files found in /etc/. Let's get to it."
 	shred -v -u "$etc_file" || rm -f "$tmp_file"
