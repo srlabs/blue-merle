@@ -141,6 +141,10 @@ def generate_imei(imei_prefix, imsi_d):
 
 
 def validate_imei(imei):
+    # before anything check if length is 14 characters
+    if len(imei) != 14:
+        print(f"NOT A VALID IMEI: {imei} - IMEI must be 14 characters in length")
+        return False
     # cut off last digit
     validation_digit = int(imei[-1])
     imei_verify = imei[0:14]
