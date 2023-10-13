@@ -1126,116 +1126,27 @@ return view.extend({
 		var view = E([], [
 			E('style', { 'type': 'text/css' }, [ css ]),
 
-			E('h2', {}, _('Software')),
+			E('h2', {}, _('Blue Merle')),
 
 			E('div', { 'class': 'controls' }, [
 				E('div', {}, [
-					E('label', {}, _('Free space') + ':'),
-					E('div', { 'class': 'cbi-progressbar', 'title': _('unknown') }, E('div', {}, [ '\u00a0' ]))
-				]),
-
-				E('div', {}, [
-					E('label', {}, _('Filter') + ':'),
+					E('label', {}, _('IMEI') + ':'),
 					E('span', { 'class': 'control-group' }, [
-						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('Type to filter…'), 'value': query, 'input': handleInput }),
+						E('input', { 'type': 'text', 'name': 'filter', 'placeholder': _('e.g. 31428392718429'), 'minlength':14, 'maxlenght':14, 'required':true, 'value': query, 'input': handleInput }),
 						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
-					])
-				]),
-
-				E('div', {}, [
-					E('label', {}, _('Download and install package') + ':'),
-					E('span', { 'class': 'control-group' }, [
-						E('input', { 'type': 'text', 'name': 'install', 'placeholder': _('Package name or URL…'), 'keydown': function(ev) { if (ev.keyCode === 13) handleManualInstall(ev) }, 'disabled': isReadonlyView }),
-						E('button', { 'class': 'btn cbi-button cbi-button-action', 'click': handleManualInstall, 'disabled': isReadonlyView }, [ _('OK') ])
 					])
 				]),
 
 				E('div', {}, [
 					E('label', {}, _('Actions') + ':'), ' ',
 					E('span', { 'class': 'control-group' }, [
-						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('Update lists…') ]), ' ',
-						E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('Upload Package…') ]), ' ',
-						E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Configure opkg…') ])
+						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleOpkg, 'disabled': isReadonlyView }, [ _('SIM swap…') ]), ' ',
+						E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('IMEI change…') ]), ' ',
+						E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Shred config…') ])
 					])
-				]),
-
-				E('div', {}, [
-					E('label', {}, _('Display LuCI translation packages') + ':'), ' ',
-					E('div', [
-						E('label', {
-							'data-tooltip': _('Display base translation packages and translation packages for already installed languages only')
-						}, [
-							E('input', {
-								'type': 'radio',
-								'name': 'filter_i18n',
-								'value': 'lang',
-								'change': handleI18nFilter,
-								'checked': true
-							}),
-							' ',
-							_('filtered', 'Display translation packages')
-						]),
-						' \u00a0 ',
-						E('label', {
-							'data-tooltip': _('Display all available translation packages')
-						}, [
-							E('input', {
-								'type': 'radio',
-								'name': 'filter_i18n',
-								'value': 'all',
-								'change': handleI18nFilter
-							}),
-							' ',
-							_('all', 'Display translation packages')
-						]),
-						' \u00a0 ',
-						E('label', {
-							'data-tooltip': _('Hide all translation packages')
-						}, [
-							E('input', {
-								'type': 'radio',
-								'name': 'filter_i18n',
-								'value': 'none',
-								'change': handleI18nFilter
-							}),
-							' ',
-							_('none', 'Display translation packages')
-						])
-					])
-				])
-			]),
-
-			E('ul', { 'class': 'cbi-tabmenu mode' }, [
-				E('li', { 'data-mode': 'available', 'class': 'available cbi-tab', 'click': handleMode }, E('a', { 'href': '#' }, [ _('Available') ])),
-				E('li', { 'data-mode': 'installed', 'class': 'installed cbi-tab-disabled', 'click': handleMode }, E('a', { 'href': '#' }, [ _('Installed') ])),
-				E('li', { 'data-mode': 'updates', 'class': 'installed cbi-tab-disabled', 'click': handleMode }, E('a', { 'href': '#' }, [ _('Updates') ]))
-			]),
-
-			E('div', { 'class': 'controls', 'style': 'display:none' }, [
-				E('div', { 'class': 'pager center' }, [
-					E('button', { 'class': 'btn cbi-button-neutral prev', 'aria-label': _('Previous page'), 'click': handlePage }, [ '«' ]),
-					E('div', { 'class': 'text' }, [ 'dummy' ]),
-					E('button', { 'class': 'btn cbi-button-neutral next', 'aria-label': _('Next page'), 'click': handlePage }, [ '»' ])
-				])
-			]),
-
-			E('table', { 'id': 'packages', 'class': 'table' }, [
-				E('tr', { 'class': 'tr cbi-section-table-titles' }, [
-					E('th', { 'class': 'th col-2 left' }, [ _('Package name') ]),
-					E('th', { 'class': 'th col-2 left version' }, [ _('Version') ]),
-					E('th', { 'class': 'th col-1 center size'}, [ _('Size (.ipk)') ]),
-					E('th', { 'class': 'th col-10 left' }, [ _('Description') ]),
-					E('th', { 'class': 'th right cbi-section-actions' }, [ '\u00a0' ])
-				])
-			]),
-
-			E('div', { 'class': 'controls', 'style': 'display:none' }, [
-				E('div', { 'class': 'pager center' }, [
-					E('button', { 'class': 'btn cbi-button-neutral prev', 'aria-label': _('Previous page'), 'click': handlePage }, [ '«' ]),
-					E('div', { 'class': 'text' }, [ 'dummy' ]),
-					E('button', { 'class': 'btn cbi-button-neutral next', 'aria-label': _('Next page'), 'click': handlePage }, [ '»' ])
 				])
 			])
+
 		]);
 
 		requestAnimationFrame(function() {
