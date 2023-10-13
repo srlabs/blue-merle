@@ -39,18 +39,18 @@ GASLIGHT
 # Kills process responsible for manipulating (and protecting) the /tmp/ file instance
 killall -9 gltertf
 
-# shredding /tmp/tertf
+# shredding /tmp/tertf, rm for good measure
 if [ -f "$tmp_file" ];then
 	echo "Files found within /tmp/. Let's get to it."
-	shred -v -u "$tmp_file"
+	shred -v -u "$tmp_file" || rm -f "$tmp_file"
 else
 	echo "No file found within /tmp/tertf. No shredding to be done there."
 fi
 
-# shredding /etc/tertf
+# shredding /etc/tertf, rm for good measure
 if [ -f "$etc_file" ]; then
 	echo "Files found in /etc/. Let's get to it."
-	shred -v -u "$etc_file" #-v provides verbose output to ease my anxious mind and -u deletes files after they are overwritten
+	shred -v -u "$etc_file" || rm -f ""$etc_file""
 else
 	echo "No file found within /etc/tertf. No shredding to be done there."
 fi
