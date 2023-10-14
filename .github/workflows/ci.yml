@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: CI
+  cancel-in-progress: false
+
+jobs:
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    env:
+      owrt-package: blue-merle
+      SDK_URL: "https://downloads.openwrt.org/releases/23.05.0/targets/ath79/nand/openwrt-sdk-23.05.0-ath79-nand_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+      SDK_FILENAME: "openwrt-sdk-23.05.0-ath79-nand_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || 'main' }}
+      - name: Get the SDK
+        run: |
+          mkdir sdk
+          cd sdk
+          wget "${SDK_URL}"
+          tar xf "${SDK_FILENAME}"
+      - name: Set up package dir
+        run: |
+          cd "sdk/${SDK_FILENAME%.tar.xz}"
+          mkdir package/${{ env.owrt-package }}
+          ln -s "${GITHUB_WORKSPACE}"/Makefile package/${{ env.owrt-package }}/
+          ln -s "${GITHUB_WORKSPACE}"/files package/${{ env.owrt-package }}/
+      - name: Update packages feed
+        run: |
+          cd "sdk/${SDK_FILENAME%.tar.xz}"
+          scripts/feeds update packages >/dev/null
+      - name: Set up OpenWrt config
+        run: |
+          cd "sdk/${SDK_FILENAME%.tar.xz}"
+          echo "CONFIG_SIGNED_PACKAGES=n" > .config
+          make defconfig
+      - name: Build package
+        run: |
+          cd "sdk/${SDK_FILENAME%.tar.xz}"
+          make -j$(nproc) V=s package/${{ env.owrt-package }}/compile
+          make -j1 V=s package/index
+      - name: Generate artifact name
+        id: generate-name
+        run: echo "artifact-name=${{ github.event.repository.name }}-${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Prepare artifact
+        run: |
+          mkdir package-output
+          rsync -av sdk/"${SDK_FILENAME%.tar.xz}"/bin/packages/mips_24kc/base/"${{ env.owrt-package }}"*.ipk package-output/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.generate-name.outputs.artifact-name }}
+          path: package-output/
