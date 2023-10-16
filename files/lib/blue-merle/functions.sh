@@ -15,14 +15,6 @@ CHECKMACSYMLINK () {
     fi
 }
 
-# Restore gl_tertf from back-up
-RESTORE_GL_TERTF () {
-    local loc_file="/etc/init.d/gl_tertf"
-    local loc_backup="/etc/init.d/gl_tertf.bak"
-    #local loc_location="/etc/init.d"
-    rm "$loc_file"
-    mv "$loc_backup" "$loc_file"
-}
 
 UNICAST_MAC_GEN () {
     loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
