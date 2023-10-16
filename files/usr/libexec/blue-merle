@@ -30,6 +30,11 @@ elif [ "$1" == "random-imei" ]; then
 elif [ "$1" == "shutdown-modem" ]; then
     exec gl_modem AT AT+CFUN=4
 
+elif [ "$1" == "shutdown" ]; then
+    echo '{ "msg": "Shutdowing down..." }' > /dev/ttyS0
+    halt -d 5
+    echo -n "Shutting down"
+
 elif [ "$1" == "write-imei" ]; then
     new_imei=$2
     echo -n  { "action": "write" }
