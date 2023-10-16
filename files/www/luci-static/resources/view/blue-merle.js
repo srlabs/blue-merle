@@ -829,7 +829,42 @@ function handleSimSwap(ev) {
 				_('Shutting down modem…')
 			 )
 		]
-	)
+	);
+    callBlueMerle("shutdown-modem").then(
+        function(res) {
+            dlg.appendChild(
+                E('pre', { 'class': 'result'},
+                    res
+                )
+            );
+            dlg.appendChild(
+                E('p', { 'class': 'text'},
+                    _("Generating Random IMEI")
+                )
+            );
+            callBlueMerle("random-imei").then(
+                function(res) {
+                    E('p', { 'class': 'text'},
+                        _("IMEI set:") + " " + res
+                    ),
+                    E('p', { 'class': 'text'},
+                        _("Please shutdown the device and go to another place before booting")
+                    )
+                }
+            ).catch(
+                function(err) {
+                }
+            );
+        }
+    ).catch(
+        function(err) {
+            dlg.appendChild(
+                E('p',{'class': 'error'},
+                    _('Error! ') + err
+                )
+            )
+        }
+    );
 }
 
 function handleOpkg(ev)
@@ -974,14 +1009,14 @@ return view.extend({
 						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
 					])
 				]),
+			]),
 
-				E('div', {}, [
-					E('label', {}, _('Actions') + ':'), ' ',
-					E('span', { 'class': 'control-group' }, [
-						E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleSimSwap, 'disabled': isReadonlyView }, [ _('SIM swap…') ]), ' ',
-						E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('IMEI change…') ]), ' ',
-						E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Shred config…') ])
-					])
+			E('div', {}, [
+				E('label', {}, _('Actions') + ':'), ' ',
+				E('span', { 'class': 'control-group' }, [
+					E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleSimSwap, 'disabled': isReadonlyView }, [ _('SIM swap…') ]), ' ',
+					E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('IMEI change…') ]), ' ',
+					E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Shred config…') ])
 				])
 			])
 
