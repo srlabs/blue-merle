@@ -86,6 +86,7 @@ define Package/blue-merle/postinst
 	#!/bin/sh
 	uci set switch-button.@main[0].func='sim'
 	uci commit switch-button
+	echo {\"msg\": \"Successfully installed Blue Merle\"} > /dev/ttyS0
 endef
 
 define Package/blue-merle/postrm
