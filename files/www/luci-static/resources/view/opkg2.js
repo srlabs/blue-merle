@@ -823,10 +823,13 @@ function handleRemove(ev)
 }
 
 function handleSimSwap(ev) {
-		var dlg = ui.showModal(_('Starting SIM swap...'), [
+	var dlg = ui.showModal(_('Starting SIM swap...'),
+	    [
 			E('p', { 'class': 'spinning' },
 				_('Shutting down modem…')
-		]);
+			 )
+		]
+	)
 }
 
 function handleOpkg(ev)
