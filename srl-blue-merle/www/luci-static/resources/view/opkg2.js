@@ -199,140 +199,6 @@ function parseList(s, dest)
 	}
 }
 
-function display(pattern)
-{
-	var src = packages[currentDisplayMode === 'updates' ? 'installed' : currentDisplayMode],
-	    table = document.querySelector('#packages'),
-	    pagers = document.querySelectorAll('.controls > .pager'),
-	    i18n_filter = null;
-
-	currentDisplayRows.length = 0;
-
-	if (typeof(pattern) === 'string' && pattern.length > 0)
-		pattern = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig');
-
-	switch (document.querySelector('input[name="filter_i18n"]:checked').value) {
-	case 'all':
-		i18n_filter = /^luci-i18n-/;
-		break;
-
-	case 'lang':
-		i18n_filter = new RegExp('^luci-i18n-(base-.+|.+-(' + languages.join('|') + '))$');
-		break;
-	}
-
-	for (var name in src.pkgs) {
-		var pkg = src.pkgs[name],
-		    desc = pkg.description || '',
-		    altsize = null;
-
-		if (!pkg.size && packages.available.pkgs[name])
-			altsize = packages.available.pkgs[name].size;
-
-		if (!desc && packages.available.pkgs[name])
-			desc = packages.available.pkgs[name].description || '';
-
-		desc = desc.split(/\n/);
-		desc = desc[0].trim() + (desc.length > 1 ? '…' : '');
-
-		if ((pattern instanceof RegExp) &&
-		    !name.match(pattern) && !desc.match(pattern))
-			continue;
-
-		if (name.indexOf('luci-i18n-') === 0 && (!(i18n_filter instanceof RegExp) || !name.match(i18n_filter)))
-			continue;
-
-		var btn, ver;
-
-		if (currentDisplayMode === 'updates') {
-			var avail = packages.available.pkgs[name],
-			    inst  = packages.installed.pkgs[name];
-
-			if (!inst || !inst.installed)
-				continue;
-
-			if (!avail || compareVersion(avail.version, pkg.version) <= 0)
-				continue;
-
-			ver = '%s » %s'.format(
-				truncateVersion(pkg.version || '-'),
-				truncateVersion(avail.version || '-'));
-
-			btn = E('div', {
-				'class': 'btn cbi-button-positive',
-				'data-package': name,
-				'click': handleInstall
-			}, _('Upgrade…'));
-		}
-		else if (currentDisplayMode === 'installed') {
-			if (!pkg.installed)
-				continue;
-
-			ver = truncateVersion(pkg.version || '-');
-			btn = E('div', {
-				'class': 'btn cbi-button-negative',
-				'data-package': name,
-				'click': handleRemove
-			}, _('Remove…'));
-		}
-		else {
-			var inst = packages.installed.pkgs[name];
-
-			ver = truncateVersion(pkg.version || '-');
-
-			if (!inst || !inst.installed)
-				btn = E('div', {
-					'class': 'btn cbi-button-action',
-					'data-package': name,
-					'click': handleInstall
-				}, _('Install…'));
-			else if (inst.installed && inst.version != pkg.version)
-				btn = E('div', {
-					'class': 'btn cbi-button-positive',
-					'data-package': name,
-					'click': handleInstall
-				}, _('Upgrade…'));
-			else
-				btn = E('div', {
-					'class': 'btn cbi-button-neutral',
-					'disabled': 'disabled'
-				}, _('Installed'));
-		}
-
-		name = '%h'.format(name);
-		desc = '%h'.format(desc || '-');
-
-		if (pattern) {
-			name = name.replace(pattern, '<ins>$&</ins>');
-			desc = desc.replace(pattern, '<ins>$&</ins>');
-		}
-
-		currentDisplayRows.push([
-			name,
-			ver,
-			pkg.size ? '%1024mB'.format(pkg.size)
-			         : (altsize ? '~%1024mB'.format(altsize) : '-'),
-			desc,
-			btn
-		]);
-	}
-
-	currentDisplayRows.sort(function(a, b) {
-		if (a[0] < b[0])
-			return -1;
-		else if (a[0] > b[0])
-			return 1;
-		else
-			return 0;
-	});
-
-	for (var i = 0; i < pagers.length; i++) {
-		pagers[i].parentNode.style.display = '';
-		pagers[i].setAttribute('data-offset', 100);
-	}
-
-	handlePage({ target: pagers[0].querySelector('.prev') });
-}
 
 function handlePage(ev)
 {
@@ -852,9 +718,48 @@ function handleConfig(ev)
 {
 	var conf = {};
 
-	ui.showModal(_('OPKG Configuration'), [
-		E('p', { 'class': 'spinning' }, _('Loading configuration data…'))
-	]);
+        var cmd = "/usr/libexec/blue-merle";
+		var dlg = ui.showModal(_('Executing blue merle'), [
+			E('p', { 'class': 'spinning' },
+				_('Waiting for the <em>%h</em> command to complete…').format(cmd))
+		]);
+
+        var argv = []; //["shred"];
+		fs.exec_direct('/usr/libexec/blue-merle', argv, 'json').then(function(res) {
+
+			if (res.stdout)
+				dlg.appendChild(E('pre', [ res.stdout ]));
+
+			if (res.stderr) {
+				dlg.appendChild(E('h5', _('Errors')));
+				dlg.appendChild(E('pre', { 'class': 'errors' }, [ res.stderr ]));
+			}
+
+			if (res.code !== 0)
+				dlg.appendChild(E('p', _('The <em>opkg %h</em> command failed with code <code>%d</code>.').format(cmd, (res.code & 0xff) || -1)));
+
+			dlg.appendChild(E('div', { 'class': 'right' },
+				E('div', {
+					'class': 'btn',
+					'click': L.bind(function(res) {
+						if (ui.menu && ui.menu.flushCache)
+							ui.menu.flushCache();
+
+						ui.hideModal();
+						updateLists();
+
+						if (res.code !== 0)
+							rejectFn(new Error(res.stderr || 'opkg error %d'.format(res.code)));
+						else
+							resolveFn(res);
+					}, this, res)
+				}, _('Dismiss'))));
+		}).catch(function(err) {
+			ui.addNotification(null, E('p', _('Unable to execute <em>opkg %s</em> command: %s').format(cmd, err)));
+			ui.hideModal();
+		});
+
+
 
 	fs.list('/etc/opkg').then(function(partials) {
 		var files = [ '/etc/opkg.conf' ];
@@ -914,7 +819,7 @@ function handleConfig(ev)
 			}, _('Save')),
 		]));
 
-		ui.showModal(_('OPKG Configuration'), body);
+		//ui.showModal(_('OPKG Configuration'), body);
 	});
 }
 
