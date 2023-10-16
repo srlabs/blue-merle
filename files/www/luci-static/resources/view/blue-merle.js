@@ -855,7 +855,8 @@ function handleSimSwap(ev) {
                     E('p', { 'class': 'text'},
                         _("Please shutdown the device and go to another place before booting")
                     ),
-					E('button', { 'class': 'btn cbi-button-positive', 'click': handleShutdown, 'disabled': isReadonlyView }, [ _('Shutdown…') ]), ' ',
+					E('button', { 'class': 'btn cbi-button-positive', 'click': handleShutdown, 'disabled': isReadonlyView },
+					    [ _('Shutdown…') ])
                 }
             ).catch(
                 function(err) {
