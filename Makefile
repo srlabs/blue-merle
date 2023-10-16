@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/blue-merle
 	SECTION:=utils
 	CATEGORY:=Utilities
-	EXTRA_DEPENDS:=luci-base bash coreutils-shred python3 python3-pyserial patch
+	EXTRA_DEPENDS:=luci-base gl-sdk4-mcu bash coreutils-shred python3 python3-pyserial patch
 	TITLE:=Anonymity Enhancements for GL-E750 Mudi
 endef
 
@@ -59,49 +59,11 @@ define Package/blue-merle/preinst
 		fi
 	}
 
-	UPDATE_MCU() {
-		echo "6e6b86e3ad7fec0d5e426eb9a41c51c6f0d6b68a4d341ec553edeeade3e4b470  /tmp/e750-mcu-V1.0.7.bin" > /tmp/e750-mcu.bin.sha256
-		wget -O /tmp/e750-mcu-V1.0.7.bin https://github.com/gl-inet/GL-E750-MCU-instruction/blob/master/e750-mcu-V1.0.7-56a1cad7f0eb8318ebe3c3c46a4cf3ff.bin?raw=true
-		if sha256sum -cs /tmp/e750-mcu.bin.sha256; then
-			ubus call service delete '{"name":"e750_mcu"}'
-			mcu_update /tmp/e750-mcu-V1.0.7.bin
-		else
-			echo "Failed to update MCU, verification of the binary failed."
-			echo "Your device needs to be connected to the Internet in order to download the MCU binary."
-			exit 1
-		fi
-	}
-
-	CHECK_MCUVERSION() {
-		function version { echo "$$@" | cut -d' ' -f2 | awk -F. '{ printf("%d%03d%03d%03d\n", $$1,$$2,$$3,$$4); }'; }
-		mcu_version=`echo \{\"version\": \"1\"} > /dev/ttyS0; sleep 0.1; cat /dev/ttyS0|tr -d '\n'`
-		if [ $$(version "$$mcu_version") -ge $$(version "V 1.0.7") ]; then
-			return 0
-		else
-			echo
-			echo "Your MCU version has not been verified to work with blue-merle."
-						echo "Automatic shutdown may not work."
-						echo "The install script can initiate an update of the MCU."
-						echo "The device will reboot and, after reboot, you need to run opkg install blue-merle again."
-						echo -n "Would you like to update your MCU? (y/N): "
-						read answer
-						case $$answer in
-								Y*) answer=0;;
-								y*) answer=0;;
-								*) answer=1;;
-						esac
-						if [[ "$$answer" -eq 0 ]]; then
-								UPDATE_MCU
-						fi
-				fi
-		}
-
 	if grep -q "GL.iNet GL-E750" /proc/cpuinfo; then
 	    GL_VERSION=$$(cat /etc/glversion)
 	    case $$GL_VERSION in
 	        4.3.8)
 	            echo Version $$GL_VERSION is supported
-	            CHECK_MCUVERSION
 	            exit 0
 	            ;;
 	        4.*)
