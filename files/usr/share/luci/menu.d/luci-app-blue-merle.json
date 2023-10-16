@@ -4,7 +4,7 @@
 		"order": 30,
 		"action": {
 			"type": "view",
-			"path": "opkg2"
+			"path": "blue-merle"
 		},
 		"depends": {
 			"acl": [ "luci-app-blue-merle" ]
