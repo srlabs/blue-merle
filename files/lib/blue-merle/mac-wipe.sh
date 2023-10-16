@@ -6,4 +6,6 @@
 shred /etc/oui-tertf/client.db ||  rm -f /etc/oui-tertf/client.db
 # We mount a tmpfs so that the client database will be stored in memory only
 mount -t tmpfs / /etc/oui-tertf
+logger -p notice -t blue-merle-mac-wipe "Restarting tertf..."
 /etc/init.d/gl-tertf start
+logger -p notice -t blue-merle-mac-wipe "... Finished"
