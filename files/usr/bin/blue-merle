@@ -112,7 +112,8 @@ case $answer in
 	*) answer=1;;
 esac
 if [[ "$answer" -eq 1 ]]; then
-	echo {\"poweroff\": \"1\"} >/tmp/mcu_message && sleep 0.5 && killall -17 e750-mcu
+    echo '{ "msg": "Shutting down..." }' > /dev/ttyS0
+    halt -d 5
 else
 	echo "Resetting modem..."
 	until gl_modem AT AT+QPOWD | grep -q OK
