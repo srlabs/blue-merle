@@ -84,14 +84,12 @@ endef
 
 define Package/blue-merle/postinst
 	#!/bin/sh
-	uci set glconfig.switch_button='service'
-	uci set glconfig.switch_button.enable='1'
-	uci set glconfig.switch_button.function='sim'
-	uci commit glconfig
+	uci set switch-button.@main[0].func='sim'
+	uci commit switch-button
 endef
 
 define Package/blue-merle/postrm
 	#!/bin/sh
-	uci set glconfig.switch_button.function='tor'
+	uci set switch-button.@main[0].func='tor'
 endef
 $(eval $(call BuildPackage,$(PKG_NAME)))
