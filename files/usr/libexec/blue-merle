@@ -25,7 +25,8 @@ elif [ "$1" == "read-imsi" ]; then
     fi
 
 elif [ "$1" == "random-imei" ]; then
-    exec /lib/blue-merle/imei_generate.py --random
+    /lib/blue-merle/imei_generate.py --random
+    READ_IMEI
 
 elif [ "$1" == "shutdown-modem" ]; then
     exec gl_modem AT AT+CFUN=4
