@@ -7,7 +7,6 @@ STOP=99
  
 start() {        
 	/lib/blue-merle/mac-wipe.sh
-	CHECKMACSYMLINK
 	RESET_BSSIDS
 }                 
  

@@ -2,19 +2,6 @@
 
 # This script provides helper functions for blue-merle
 
-# check that MAC wiping/linking to dev/null is still in place
-CHECKMACSYMLINK () {
-	local loc_file="/etc/init.d/gl_tertf"
-    if [ $(readlink -f "$loc_file") == "/dev/null" ]
-    then 
-        echo "TEST: EXISTS"
-    else
-        echo "TEST: DOES NOT EXIST"
-        cp "$loc_file" "$loc_file.bak" # todo: consider if we need to move this backup elsewhere?
-        ln -sf /dev/null "$loc_file"
-    fi
-}
-
 
 UNICAST_MAC_GEN () {
     loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
