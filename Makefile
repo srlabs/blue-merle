@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/blue-merle
 	SECTION:=utils
 	CATEGORY:=Utilities
-	EXTRA_DEPENDS:=luci-base, gl-sdk4-mcu, bash, coreutils-shred, python3, python3-pyserial, patch
+	EXTRA_DEPENDS:=luci-base, gl-sdk4-mcu, coreutils-shred, python3, python3-pyserial
 	TITLE:=Anonymity Enhancements for GL-E750 Mudi
 endef
 
