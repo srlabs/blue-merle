@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.1.0
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -31,6 +31,7 @@ define Package/blue-merle/install
 	$(INSTALL_BIN) ./files/etc/init.d/* $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/lib/blue-merle/mac-wipe.sh $(1)/lib/blue-merle/mac-wipe.sh
 	$(INSTALL_BIN) ./files/usr/bin/blue-merle $(1)/usr/bin/blue-merle
+	$(INSTALL_BIN) ./files/usr/libexec/blue-merle $(1)/usr/libexec/blue-merle
 endef
 
 define Package/blue-merle/preinst
@@ -42,7 +43,7 @@ define Package/blue-merle/preinst
 		if [ -f "/tmp/sysinfo/model" ] && [ -f "/etc/glversion" ]; then
 			echo "You have a `cat /tmp/sysinfo/model`, running firmware version `cat /etc/glversion`."
 		fi
-		echo "blue-merle has only been tested with GL-E750 Mudi Version 3.215."
+		echo "blue-merle has only been tested with GL-E750 Mudi Version 4.3.8."
 		echo "The device or firmware version you are using have not been verified to work with blue-merle."
 		echo -n "Would you like to continue on your own risk? (y/N): "
 		read answer
@@ -98,16 +99,12 @@ define Package/blue-merle/preinst
 	if grep -q "GL.iNet GL-E750" /proc/cpuinfo; then
 	    GL_VERSION=$$(cat /etc/glversion)
 	    case $$GL_VERSION in
-	        4.*)
-	            echo Version $$GL_VERSION is not supported
-	            exit 1
-	            ;;
-	        3.215)
+	        4.3.8)
 	            echo Version $$GL_VERSION is supported
 	            CHECK_MCUVERSION
 	            exit 0
 	            ;;
-	        3.*)
+	        4.*)
 	            echo Version $$GL_VERSION is *probably* supported
 	            ABORT_GLVERSION
 	            ;;
@@ -124,12 +121,6 @@ endef
 
 define Package/blue-merle/postinst
 	#!/bin/sh
-
-	patch -b /www/src/temple/settings/index.js /lib/blue-merle/patches/index.js.patch
-	patch -b /www/src/temple/settings/index.html /lib/blue-merle/patches/index.html.patch
-	patch -b /usr/bin/switchaction /lib/blue-merle/patches/switchaction.patch
-	patch -b /usr/bin/switch_queue /lib/blue-merle/patches/switch_queue.patch
-
 	uci set glconfig.switch_button='service'
 	uci set glconfig.switch_button.enable='1'
 	uci set glconfig.switch_button.function='sim'
@@ -138,14 +129,6 @@ endef
 
 define Package/blue-merle/postrm
 	#!/bin/sh
-
-	mv /www/src/temple/settings/index.js.orig /www/src/temple/settings/index.js
-	mv /www/src/temple/settings/index.html.orig /www/src/temple/settings/index.html
-	mv /usr/bin/switchaction.orig /usr/bin/switchaction
-	mv /usr/bin/switch_queue.orig /usr/bin/switch_queue
-
-	rm -f /tmp/sim_change_start
-	rm -f /tmp/sim_change_switch
+	uci set glconfig.switch_button.function='tor'
 endef
 $(eval $(call BuildPackage,$(PKG_NAME)))
-
