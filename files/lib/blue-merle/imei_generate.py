@@ -42,7 +42,11 @@ TIMEOUT = 3
 
 
 def get_imsi():
+    if (verbose):
+        print(f'Obtaining Serial {TTY} with timeout {TIMEOUT}...')
     with serial.Serial(TTY, BAUDRATE, timeout=TIMEOUT, exclusive=True) as ser:
+        if (verbose):
+            print('Getting IMSI')
         ser.write(b'AT+CIMI\r')
         # TODO: read loop until we have 'enough' of what to expect
         output = ser.read(64)
