@@ -161,7 +161,7 @@ function handleConfig(ev)
 				_('Waiting for the <em>%h</em> command to complete…').format(cmd))
 		]);
 
-        var argv = ["shred"];
+        var argv = ["random-imei"];
         console.log("Calling ", cmd, argv);
         // FIXME: Investigate whether we should be using fs.exec()
 		fs.exec_direct(cmd, argv, 'text').then(function(res) {
