@@ -27,7 +27,7 @@ elif [ "$1" == "read-imsi" ]; then
     fi
 
 elif [ "$1" == "random-imei" ]; then
-    /lib/blue-merle/imei_generate.py --random
+    flock -n /tmp/blue-merle-imei-generate.lock  timeout 15  /lib/blue-merle/imei_generate.py --random
     READ_IMEI
 
 elif [ "$1" == "shutdown-modem" ]; then
