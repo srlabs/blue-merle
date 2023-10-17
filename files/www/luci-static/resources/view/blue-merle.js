@@ -270,9 +270,10 @@ function handleRemove(ev)
 }
 
 function handleSimSwap(ev) {
+    const spinnerID = 'swap-spinner-id';
 	var dlg = ui.showModal(_('Starting SIM swap...'),
 	    [
-			E('p', { 'class': 'spinning' },
+			E('p', { 'class': 'spinning', 'id': spinnerID },
 				_('Shutting down modem…')
 			 )
 		]
@@ -291,6 +292,7 @@ function handleSimSwap(ev) {
             );
             callBlueMerle("random-imei").then(
                 function(res) {
+                    document.getElementById(spinnerID).style = "render: none";
                     dlg.appendChild(
                         E('div', { 'class': 'text'},
                           [
@@ -359,17 +361,17 @@ return view.extend({
 				E('div', {}, [
 					E('label', {}, _('IMEI') + ':'),
 					E('span', { 'class': 'control-group' }, [
-						E('input', { 'id':imeiInputID, 'type': 'text', 'name': 'filter', 'placeholder': _('e.g. 31428392718429'), 'minlength':14, 'maxlenght':14, 'required':true, 'value': query, 'input': handleInput }),
-						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ]),
-						E('button', { 'class': 'btn cbi-button', 'click': randomIMEI }, [ _('Set Random') ])
+						E('input', { 'id':imeiInputID, 'type': 'text', 'name': 'filter', 'placeholder': _('e.g. 31428392718429'), 'minlength':14, 'maxlenght':14, 'required':true, 'value': query, 'input': handleInput, 'disabled': true })
+						//, E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
+						//, E('button', { 'class': 'btn cbi-button', 'click': randomIMEI }, [ _('Set Random') ])
 					])
 				]),
 
 				E('div', {}, [
 					E('label', {}, _('IMSI') + ':'),
 					E('span', { 'class': 'control-group' }, [
-						E('input', { 'id':imsiInputID, 'type': 'text', 'name': 'filter', 'placeholder': _('e.g. 31428392718429'), 'minlength':14, 'maxlenght':14, 'required':true, 'value': query, 'input': handleInput }),
-						E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
+						E('input', { 'id':imsiInputID, 'type': 'text', 'name': 'filter', 'placeholder': _('e.g. 31428392718429'), 'minlength':14, 'maxlenght':14, 'required':true, 'value': query, 'input': handleInput, 'disabled': true })
+						//, E('button', { 'class': 'btn cbi-button', 'click': handleReset }, [ _('Clear') ])
 					])
 				]),
 			]),
@@ -377,9 +379,9 @@ return view.extend({
 			E('div', {}, [
 				E('label', {}, _('Actions') + ':'), ' ',
 				E('span', { 'class': 'control-group' }, [
-					E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleSimSwap, 'disabled': isReadonlyView }, [ _('SIM swap…') ]), ' ',
-					E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('IMEI change…') ]), ' ',
-					E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Shred config…') ])
+					E('button', { 'class': 'btn cbi-button-positive', 'data-command': 'update', 'click': handleSimSwap, 'disabled': isReadonlyView }, [ _('SIM swap…') ]), ' '
+					//, E('button', { 'class': 'btn cbi-button-action', 'click': handleUpload, 'disabled': isReadonlyView }, [ _('IMEI change…') ]), ' '
+					//, E('button', { 'class': 'btn cbi-button-neutral', 'click': handleConfig }, [ _('Shred config…') ])
 				])
 			])
 
