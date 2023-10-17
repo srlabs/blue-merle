@@ -102,55 +102,9 @@ var languages = ['en'];
 
 var currentDisplayMode = 'available', currentDisplayRows = [];
 
-function handlePage(ev)
-{
-}
 
-function handleMode(ev)
-{
-}
-
-function handleI18nFilter(ev)
-{
-}
-
-function orderOf(c)
-{
-}
-
-function compareVersion(val, ref)
-{
-}
-
-function versionSatisfied(ver, ref, vop)
-{
-}
-
-function pkgStatus(pkg, vop, ver, info)
-{
-}
-
-function renderDependencyItem(dep, info, flat)
-{
-}
-
-function renderDependencies(depends, info, flat)
-{
-}
-
-function truncateVersion(v, op)
-{
-}
 
 function handleReset(ev)
-{
-}
-
-function handleInstall(ev)
-{
-}
-
-function handleManualInstall(ev)
 {
 }
 
