@@ -267,53 +267,6 @@ function handleShutdown(ev)
 
 function handleRemove(ev)
 {
-	var name = ev.target.getAttribute('data-package'),
-	    pkg = packages.installed.pkgs[name],
-	    avail = packages.available.pkgs[name] || {},
-	    size, desc;
-
-	if (avail.installsize)
-		size = _('~%1024mB installed').format(avail.installsize);
-	else if (avail.size)
-		size = _('~%1024mB compressed').format(avail.size);
-	else
-		size = _('unknown');
-
-	if (avail.description) {
-		desc = E('div', {}, [
-			E('h5', {}, _('Description')),
-			E('p', {}, avail.description)
-		]);
-	}
-
-	ui.showModal(_('Remove package <em>%h</em>').format(pkg.name), [
-		E('ul', {}, [
-			E('li', '<strong>%s:</strong> %h'.format(_('Version'), pkg.version)),
-			E('li', '<strong>%s:</strong> %h'.format(_('Size'), size))
-		]),
-		desc || '',
-		E('div', { 'style': 'display:flex; justify-content:space-between; flex-wrap:wrap' }, [
-			E('label', { 'class': 'cbi-checkbox', 'style': 'float:left' }, [
-				E('input', { 'id': 'autoremove-cb', 'type': 'checkbox', 'checked': 'checked', 'name': 'autoremove', 'disabled': isReadonlyView }), ' ',
-				E('label', { 'for': 'autoremove-cb' }), ' ',
-				_('Automatically remove unused dependencies')
-			]),
-			E('div', { 'style': 'flex-grow:1', 'class': 'right' }, [
-				E('div', {
-					'class': 'btn',
-					'click': ui.hideModal
-				}, _('Cancel')),
-				' ',
-				E('div', {
-					'data-command': 'remove',
-					'data-package': name,
-					'class': 'btn cbi-button-negative',
-					'click': handleOpkg,
-					'disabled': isReadonlyView
-				}, _('Remove'))
-			])
-		])
-	]);
 }
 
 function handleSimSwap(ev) {
