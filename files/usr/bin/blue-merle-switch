@@ -38,7 +38,7 @@ done
 mcu_send_message "Continuing ..."
 sleep 1
 
-mcu_send_message "Disabling the MEfrom transmit-  ting and recei- ving RF signals."
+mcu_send_message "Disabling the ME from transmitting and receiving RF signals."
 sleep 3
 
 old_imei=$(READ_IMEI)
@@ -99,7 +99,7 @@ if [[ "$old_imsi" == "$new_imsi" ]]; then
 	sleep 3
 fi
 
-mcu_send_message "Setting random  IMEI"
+mcu_send_message "Setting random   IMEI"
 python3 /lib/blue-merle/imei_generate.py -r
 
 new_imei=$(READ_IMEI)
@@ -116,7 +116,7 @@ fi
 mcu_send_message "The device will shutdown now."
 sleep 3
 mcu_send_message "You should      change your     location before booting again."
-sleep 5 
+sleep 5
 
 
 i=5
