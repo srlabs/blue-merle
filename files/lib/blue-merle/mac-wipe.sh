@@ -16,7 +16,7 @@ cp -a "$tmpdir/client.db" /etc/oui-tertf/client.db
 umount -t tmpfs -l "$tmpdir"
 
 
-if [ $1 == "restart" ]; then
+if [[ "$1" == "restart" ]]; then
     logger -p notice -t blue-merle-mac-wipe "Restarting tertf..."
     /etc/init.d/gl-tertf start
     logger -p notice -t blue-merle-mac-wipe "... Finished"
