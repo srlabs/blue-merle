@@ -1,13 +1,7 @@
 #!/bin/sh
 
 . /lib/blue-merle/functions.sh
-
-if [ ! -c "/dev/ttyUSB3" ]; then
-	e750-mcu "Error:          /dev/ttyUSB3    does not exist."
-	sleep 3
-	e750-mcu "Please reboot & contact maintainer if problem   persists."
-	exit 1;
-fi
+. /lib/functions/gl_util.sh
 
 if [ ! -f "/tmp/sim_change_start" ]; then
 	echo 0 > /tmp/sim_change_start
@@ -22,29 +16,29 @@ sim_change_last=`cat /tmp/sim_change_start`
 sim_change_diff=$((now-sim_change_last))
 
 if [[ "$sim_change_diff" -lt 60  ]]; then
-	e750-mcu "Please wait     >1min between   two SIM swaps.  ($sim_change_diff s)"
+	mcu_send_message "Please wait     >1min between   two SIM swaps.  ($sim_change_diff s)"
 	exit 1
 fi
 
 echo "$now" > /tmp/sim_change_start
 
-e750-mcu "Starting SIM    swap."
+mcu_send_message "Starting SIM    swap."
 sleep 3
 
 i=5
 until  [[ $i -lt 0 ]]
 do
-	e750-mcu "Pull switch to  abort ($i).     "
+	mcu_send_message "Pull switch to  abort ($i).     "
 	i=$((i-1))
 	sleep 1
 
 	CHECK_ABORT
 done
 
-e750-mcu "Continuing ..."
+mcu_send_message "Continuing ..."
 sleep 1
 
-e750-mcu "Disabling the MEfrom transmit-  ting and recei- ving RF signals."
+mcu_send_message "Disabling the MEfrom transmit-  ting and recei- ving RF signals."
 sleep 3
 
 old_imei=$(READ_IMEI)
@@ -56,23 +50,23 @@ answer=1
 while [[ "$answer" -eq 1 ]]; do
 	gl_modem AT AT+CFUN=4 | grep -q OK
 	if [[ $? -eq 1 ]]; then
-		e750-mcu "Disabling failed. Trying again."
+		mcu_send_message "Disabling failed. Trying again."
 		CHECK_ABORT
 	else
 		answer=0
-		e750-mcu "Disabled."
+		mcu_send_message "Disabled."
 		sleep 2
 	fi
 done
 
-e750-mcu "Replace the SIM card. Then pull the switch."
+mcu_send_message "Replace the SIM card. Then pull the switch."
 
 while [[ `cat /tmp/sim_change_switch` = "on" ]]; do	
-	e750-mcu "Replace the SIM card. Then pull the switch."
+	mcu_send_message "Replace the SIM card. Then pull the switch."
 	sleep 3
 done
 
-e750-mcu "Switch pulled.  Continuing..."
+mcu_send_message "Switch pulled.  Continuing..."
 sleep 1
 sim_switch on
 
@@ -80,19 +74,19 @@ leak=0
 
 until gl_modem AT AT+CFUN=0 | grep -q OK
 do
-	e750-mcu "CFUN=0 failed. Trying again."
+	mcu_send_message "CFUN=0 failed. Trying again."
 	sleep 1
 done
 
 until gl_modem AT AT+CFUN=4 | grep -q OK
 do
 	leak=1
-	e750-mcu "CFUN=4 failed. Trying again."
+	mcu_send_message "CFUN=4 failed. Trying again."
 	sleep 1
 done
 
 if [[ $leak -eq 1 ]]; then
-	e750-mcu "WARNING:        Reset took longer than expected."
+	mcu_send_message "WARNING:        Reset took longer than expected."
 	sleep 3
 fi
 
@@ -101,17 +95,17 @@ sleep 1
 new_imsi=$(READ_IMSI)
 
 if [[ "$old_imsi" == "$new_imsi" ]]; then
-	e750-mcu "WARNING:        Old IMSI equals new IMSI."
+	mcu_send_message "WARNING:        Old IMSI equals new IMSI."
 	sleep 3
 fi
 
-e750-mcu "Setting random  IMEI"
+mcu_send_message "Setting random  IMEI"
 python3 /lib/blue-merle/imei_generate.py -r
 
 new_imei=$(READ_IMEI)
 
 if [[ "$old_imei" == "$new_imei" ]]; then
-	e750-mcu "WARNING:        Old IMEI equals new IMEI."
+	mcu_send_message "WARNING:        Old IMEI equals new IMEI."
 	sleep 3
 else
 	mkdir -p /tmp/modem.1-1.2
@@ -119,9 +113,9 @@ else
 fi
 
 
-e750-mcu "The device will shutdown now."
+mcu_send_message "The device will shutdown now."
 sleep 3
-e750-mcu "You should      change your     location before booting again."
+mcu_send_message "You should      change your     location before booting again."
 sleep 5 
 
 
@@ -129,10 +123,8 @@ i=5
 until  [[ $i -eq 0 ]]
 do
         i=$((i-1))
-        e750-mcu "Shutting down... ($i)"
+        mcu_send_message "Shutting down... ($i)"
         sleep 1
 done
 
-echo {\"poweroff\": \"1\"} >/tmp/mcu_message && sleep 0.5 && killall -17 e750-mcu
-
-exit 0
+/sbin/poweroff -d 5
