@@ -17,6 +17,8 @@ class Modes(Enum):
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--verbose", help="Enables verbose output",
                 action="store_true")
+ap.add_argument("-g", "--generate-only", help="Only generates an IMEI rather than setting it",
+                   action="store_true")
 modes = ap.add_mutually_exclusive_group()
 modes.add_argument("-d", "--deterministic", help="Switches IMEI generation to deterministic mode", action="store_true")
 modes.add_argument("-s", "--static", help="Sets user-defined IMEI",
@@ -201,7 +203,8 @@ if __name__ == '__main__':
         imei = generate_imei(imei_prefix, imsi_d)
         if (verbose):
             print(f"Generated new IMEI: {imei}")
-        if not set_imei(imei):
-            exit(-1)
+        if not args.generate_only:
+            if not set_imei(imei):
+                exit(-1)
 
     exit(0)
