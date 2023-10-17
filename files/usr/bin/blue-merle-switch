@@ -120,11 +120,10 @@ sleep 5
 
 
 i=5
+/sbin/poweroff -d $i
 until  [[ $i -eq 0 ]]
 do
         i=$((i-1))
         mcu_send_message "Shutting down... ($i)"
         sleep 1
 done
-
-/sbin/poweroff -d 5
