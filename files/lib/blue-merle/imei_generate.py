@@ -180,10 +180,12 @@ def validate_imei(imei):
 
 if __name__ == '__main__':
     args = ap.parse_args()
+    imsi_d = None
     if args.verbose:
         verbose = args.verbose
     if args.deterministic:
         mode = Modes.DETERMINISTIC
+        imsi_d = get_imsi()
     if args.random:
         mode = Modes.RANDOM
     if args.static is not None:
@@ -196,7 +198,6 @@ if __name__ == '__main__':
         else:
             exit(-1)
     else:
-        imsi_d = get_imsi()
         imei = generate_imei(imei_prefix, imsi_d)
         if (verbose):
             print(f"Generated new IMEI: {imei}")
