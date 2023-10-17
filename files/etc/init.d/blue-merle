@@ -2,15 +2,21 @@
 
 . /lib/blue-merle/functions.sh
 
-START=81
+# We intend to be started before the first network-related service is started.
+# According to https://openwrt.org/docs/techref/initscripts, /etc/rc.d/ determines
+# the order of the services to be started (or stopped). The lower the number,
+# the earlier the service is started.
+# We observe "repeater" having the value 15. "network" 20. We certainly want to ahead of those.
+START=14
 STOP=99
- 
-start() {        
+
+start() {
 	/lib/blue-merle/mac-wipe.sh
 	RESET_BSSIDS
-}                 
- 
-stop() {          
+	RANDOMIZE_MACADDR
+}
+
+stop() {
 	/lib/blue-merle/mac-wipe.sh
 }
 

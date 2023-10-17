@@ -14,7 +14,16 @@ RESET_BSSIDS () {
     uci set wireless.@wifi-iface[1].macaddr=`UNICAST_MAC_GEN`
     uci set wireless.@wifi-iface[0].macaddr=`UNICAST_MAC_GEN`
     uci commit wireless
-    wifi # need to reset wifi for changes to apply
+    # you need to reset wifi for changes to apply, i.e. executing "wifi"
+}
+
+
+# This chaneges the MAC address clients see when connecting to the WiFi spawned by the device.
+# You can check with "arp -a" that your endpoint, e.g. your laptop, sees a different MAC after a reboot of the Mudi.
+RANDOMIZE_MACADDR () {
+    uci set network.@device[1].macaddr=`UNICAST_MAC_GEN`
+    uci commit network
+    # You need to restart the network, i.e. /etc/init.d/network restart
 }
 
 READ_IMEI () {

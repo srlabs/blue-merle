@@ -15,6 +15,11 @@ mount -t tmpfs / /etc/oui-tertf
 cp -a "$tmpdir/client.db" /etc/oui-tertf/client.db
 umount -t tmpfs -l "$tmpdir"
 
-logger -p notice -t blue-merle-mac-wipe "Restarting tertf..."
-/etc/init.d/gl-tertf start
-logger -p notice -t blue-merle-mac-wipe "... Finished"
+
+if [ $1 == "restart" ]; then
+    logger -p notice -t blue-merle-mac-wipe "Restarting tertf..."
+    /etc/init.d/gl-tertf start
+    logger -p notice -t blue-merle-mac-wipe "... Finished"
+else
+    echo You will need to restart the gl-tertf service, i.e. /etc/init.d/gl-tertf restart
+fi
