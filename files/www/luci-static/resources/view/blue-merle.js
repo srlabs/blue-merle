@@ -338,14 +338,19 @@ function handleSimSwap(ev) {
             );
             callBlueMerle("random-imei").then(
                 function(res) {
-                    E('p', { 'class': 'text'},
-                        _("IMEI set:") + " " + res
-                    ),
-                    E('p', { 'class': 'text'},
-                        _("Please shutdown the device and go to another place before booting")
-                    ),
-					E('button', { 'class': 'btn cbi-button-positive', 'click': handleShutdown, 'disabled': isReadonlyView },
-					    [ _('Shutdown…') ])
+                    dlg.appendChild(
+                        E('div', { 'class': 'text'}, [
+                            E('p', { 'class': 'text'},
+                                _("IMEI set:") + " " + res
+                            )
+                            E('p', { 'class': 'text'},
+                                _("Please shutdown the device and go to another place before booting")
+                            ),
+    			    		E('button', { 'class': 'btn cbi-button-positive', 'click': handleShutdown, 'disabled': isReadonlyView },
+    				    	    [ _('Shutdown…') ])
+                            )
+                        ]
+                    )
                 }
             ).catch(
                 function(err) {
