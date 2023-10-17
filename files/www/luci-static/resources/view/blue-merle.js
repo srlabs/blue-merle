@@ -342,7 +342,7 @@ function handleSimSwap(ev) {
                         E('div', { 'class': 'text'}, [
                             E('p', { 'class': 'text'},
                                 _("IMEI set:") + " " + res
-                            )
+                            ),
                             E('p', { 'class': 'text'},
                                 _("Please shutdown the device and go to another place before booting")
                             ),
