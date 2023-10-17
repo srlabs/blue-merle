@@ -64,3 +64,4 @@ done
 mcu_send_message "Replace the SIM card. Then pull the switch."
 
 echo done > /tmp/blue-merle-stage1
+logger -p notice -t blue-merle-toggle "Finished with Stage 1"
