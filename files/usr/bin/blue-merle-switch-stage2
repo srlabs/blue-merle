@@ -51,6 +51,8 @@ else
 	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
 fi
 
+logger -p notice -t blue-merle-toggle "Changed IMEI from ${old_imei} to ${new_imei}"
+
 
 mcu_send_message "The device will shutdown now."
 sleep 3
@@ -66,3 +68,4 @@ do
         mcu_send_message "Shutting down... ($i)"
         sleep 1
 done
+logger -p notice -t blue-merle-toggle "Finished with Stage 2"
