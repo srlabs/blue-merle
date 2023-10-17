@@ -9,6 +9,8 @@ show_message() {
 }
 
 
+logger -p notice -t blue-merle-libexec  "Libexec $1"
+
 if [ "$1" == "read-imei" ]; then
     imei="$(READ_IMEI)"
     echo -n  $imei
@@ -35,6 +37,8 @@ elif [ "$1" == "shutdown" ]; then
     echo '{ "msg": "Shutdowing down..." }' > /dev/ttyS0
     halt -d 5
     echo -n "Shutting down"
+    poweroff -d 5
+    logger -p notice -t blue-merle-libexec "Shutting down"
 
 elif [ "$1" == "write-imei" ]; then
     new_imei=$2
