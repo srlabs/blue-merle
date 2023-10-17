@@ -61,11 +61,12 @@ READ_IMSI () {
 	echo $imsi
 }
 
+
 CHECK_ABORT () {
         sim_change_switch=`cat /tmp/sim_change_switch`
-        if [[ "$sim_change_switch" = "off" ]]; then   
-                e750-mcu "SIM change      aborted."   
-                sleep 1                               
-                exit 1                                
+        if [[ "$sim_change_switch" = "off" ]]; then
+                echo '{ "msg": "SIM change      aborted." }' > /dev/ttyS0
+                sleep 1
+                exit 1
         fi
 }
