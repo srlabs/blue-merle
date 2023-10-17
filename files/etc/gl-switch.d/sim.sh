@@ -9,6 +9,7 @@ logger -p notice -t blue-merle-toggle  "Called... ${action}"
 if [ "$action" = "on" ];then
     mcu_send_message "Blue Merle ${action}"
     echo "on" > /tmp/sim_change_switch
+    /usr/bin/blue-merle-switch
 
 elif [ "$action" = "off" ];then
     mcu_send_message "Blue Merle ${action}"
