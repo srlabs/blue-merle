@@ -1,0 +1,13 @@
+#!/bin/sh
+
+
+echo "Preparing SIM Swap..."
+/usr/bin/blue-merle-switch-stage1
+
+echo "Replace the SIM card, then press Enter"
+read answer
+
+echo "Continuing..."
+/usr/bin/blue-merle-switch-stage2
+
+echo "The device will shutdown. You should change the location before booting again."
