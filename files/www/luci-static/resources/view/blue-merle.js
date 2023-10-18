@@ -292,7 +292,7 @@ function handleSimSwap(ev) {
             );
             callBlueMerle("random-imei").then(
                 function(res) {
-                    document.getElementById(spinnerID).style = "render: none";
+                    document.getElementById(spinnerID).style = "display:none";
                     dlg.appendChild(
                         E('div', { 'class': 'text'},
                           [
@@ -300,7 +300,7 @@ function handleSimSwap(ev) {
                                 _("IMEI set:") + " " + res
                             ),
                             E('p', { 'class': 'text'},
-                                _("Please shutdown the device and go to another place before booting")
+                                _("Please shutdown the device, swap the SIM, then go to another place before booting")
                             ),
     			    		E('button', { 'class': 'btn cbi-button-positive', 'click': handleShutdown, 'disabled': isReadonlyView },
     				    	    [ _('Shutdown…') ]
@@ -389,14 +389,13 @@ return view.extend({
 
 		readIMEI().then(
 		    function(imei) {
-		        console.log("My controllolol", imei);
 		        const e = document.getElementById(imeiInputID);
 		        console.log("Input: ", e, e.placeholder, e.value);
 		        e.value = imei;
 		    }
 		).catch(
 		    function(err){
-		        console.log("Errrrrr", err)
+		        console.log("Error: ", err)
 		    }
 		)
 
