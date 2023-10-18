@@ -7,7 +7,7 @@
 # the order of the services to be started (or stopped). The lower the number,
 # the earlier the service is started.
 # We observe "repeater" having the value 15. "network" 20. We certainly want to ahead of those.
-START=14
+START=10
 STOP=99
 
 start() {

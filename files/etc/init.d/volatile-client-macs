@@ -7,7 +7,7 @@
 
 # We want to run ahead of "gl-tertf" which, currently, has a prioprity of 60.
 # We also want to run ahead of "gl_clients" which has 99.
-START=59
+START=9
 STOP=99
 
 start() {
