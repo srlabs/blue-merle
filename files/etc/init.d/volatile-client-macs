@@ -5,8 +5,9 @@
 # We intent to have the device store the database in RAM rather than on flash.
 # We replace the directory with a memory-backed tmpfs which is as volatile as we can make it.
 
-# We want to run ahead of "gl-tertf" which, currently, has a prioprity of 20.
-START=19
+# We want to run ahead of "gl-tertf" which, currently, has a prioprity of 60.
+# We also want to run ahead of "gl_clients" which has 99.
+START=59
 STOP=99
 
 start() {
