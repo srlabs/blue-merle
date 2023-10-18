@@ -18,10 +18,12 @@ RESET_BSSIDS () {
 }
 
 
-# This chaneges the MAC address clients see when connecting to the WiFi spawned by the device.
-# You can check with "arp -a" that your endpoint, e.g. your laptop, sees a different MAC after a reboot of the Mudi.
 RANDOMIZE_MACADDR () {
+    # This changes the MAC address clients see when connecting to the WiFi spawned by the device.
+    # You can check with "arp -a" that your endpoint, e.g. your laptop, sees a different MAC after a reboot of the Mudi.
     uci set network.@device[1].macaddr=`UNICAST_MAC_GEN`
+    # Here we change the MAC address the upstream wifi sees
+    uci set glconfig.general.macclone_addr=`UNICAST_MAC_GEN`
     uci commit network
     # You need to restart the network, i.e. /etc/init.d/network restart
 }
