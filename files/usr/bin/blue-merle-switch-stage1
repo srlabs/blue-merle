@@ -64,7 +64,7 @@ done
 ## We generate a random IMEI to prevent a leak of the
 ## new SIM's IMSI under the old IMEI in case the modem
 ## still talks to the network
-python3 /lib/blue-merle/imei_generate.py -r
+timeout 15  python3 /lib/blue-merle/imei_generate.py -r
 
 
 mcu_send_message "Replace the SIM card. Then pull the switch."
