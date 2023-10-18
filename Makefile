@@ -81,12 +81,21 @@ define Package/blue-merle/preinst
 	else
 		ABORT_GLVERSION
 	fi
+
+    # Our volatile-mac service gets started during the installation
+    # but it modifies the client database held by the gl_clients process.
+    # So we stop that process now, have the database put onto volatile storage
+    # and start the service after installation
+    /etc/init.d/gl_clients stop
 endef
 
 define Package/blue-merle/postinst
 	#!/bin/sh
 	uci set switch-button.@main[0].func='sim'
 	uci commit switch-button
+
+	/etc/init.d/gl_clients start
+
 	echo {\"msg\": \"Successfully installed Blue Merle\"} > /dev/ttyS0
 endef
 

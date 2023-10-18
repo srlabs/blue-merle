@@ -11,7 +11,17 @@ START=59
 STOP=99
 
 start() {
-	/lib/blue-merle/mac-wipe.sh
+    tmpdir="$(mktemp -d)"
+    # We mount a tmpfs so that the client database will be stored in memory only
+    mount -t tmpfs / "$tmpdir"
+    cp -a /etc/oui-tertf/client.db "$tmpdir"
+    shred /etc/oui-tertf/client.db ||  rm -f /etc/oui-tertf/client.db
+    # If this script runs multiple times, we accumulate mounts; we try to avoid having mounts over mounts, so we unmount any existing tmpfs
+    umount -t tmpfs -l /etc/oui-tertf
+
+    mount -t tmpfs / /etc/oui-tertf
+    cp -a "$tmpdir/client.db" /etc/oui-tertf/client.db
+    umount -t tmpfs -l "$tmpdir"
 }
 
 stop() {

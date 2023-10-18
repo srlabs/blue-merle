@@ -11,12 +11,6 @@ START=14
 STOP=99
 
 start() {
-	/lib/blue-merle/mac-wipe.sh
 	RESET_BSSIDS
 	RANDOMIZE_MACADDR
 }
-
-stop() {
-	/lib/blue-merle/mac-wipe.sh
-}
-
