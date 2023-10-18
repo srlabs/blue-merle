@@ -44,6 +44,14 @@ while [[ "$answer" -eq 1 ]]; do
 	fi
 done
 
+## We have just disabled the modem so it should not log on to any network.
+## We set a random IMEI now only to have it overwritten very soon after
+## the SIM card has been replaced. We intend to prevent an accidential
+## leak of the new SIM's IMSI with the old IMEI just in case the modem
+## accidentally tried to log in to the network.
+python3 /lib/blue-merle/imei_generate.py -r
+
+
 echo -n "Please now replace the SIM card and press any key to continue. "
 read answer
 
