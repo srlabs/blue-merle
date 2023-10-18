@@ -56,4 +56,6 @@ function make_random_imei ()
 	return imei
 end
 
-print (make_imei ("354809108035177"))
+math.randomseed(tonumber(arg[1]))
+
+print (make_random_imei ())
