@@ -5,7 +5,8 @@
 tmpdir="$(mktemp -d)"
 # We mount a tmpfs so that the client database will be stored in memory only
 mount -t tmpfs / "$tmpdir"
-/etc/init.d/gl-tertf stop
+## Somehow, we cannot "stop" this service as it does not define such action. There is also no such process. Weird.
+# /etc/init.d/gl-tertf stop
 cp -a /etc/oui-tertf/client.db "$tmpdir"
 shred /etc/oui-tertf/client.db ||  rm -f /etc/oui-tertf/client.db
 # If this script runs multiple times, we accumulate mounts; we try to avoid having mounts over mounts, so we unmount any existing tmpfs
