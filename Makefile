@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=1.1.0
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/blue-merle
 	SECTION:=utils
 	CATEGORY:=Utilities
-	EXTRA_DEPENDS:=gl-ui gl-e750-mcu bash coreutils-shred python3 python3-pyserial patch
+	EXTRA_DEPENDS:=luci-base, gl-sdk4-mcu, coreutils-shred, python3-pyserial
 	TITLE:=Anonymity Enhancements for GL-E750 Mudi
 endef
 
@@ -29,8 +29,11 @@ endef
 define Package/blue-merle/install
 	$(CP) ./files/* $(1)/
 	$(INSTALL_BIN) ./files/etc/init.d/* $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/etc/gl-switch.d/* $(1)/etc/gl-switch.d/
 	$(INSTALL_BIN) ./files/lib/blue-merle/mac-wipe.sh $(1)/lib/blue-merle/mac-wipe.sh
-	$(INSTALL_BIN) ./files/usr/bin/blue-merle $(1)/usr/bin/blue-merle
+	$(INSTALL_BIN) ./files/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/usr/libexec/blue-merle $(1)/usr/libexec/blue-merle
+	$(INSTALL_BIN) ./files/lib/blue-merle/imei_generate.py  $(1)/lib/blue-merle/imei_generate.py
 endef
 
 define Package/blue-merle/preinst
@@ -42,7 +45,7 @@ define Package/blue-merle/preinst
 		if [ -f "/tmp/sysinfo/model" ] && [ -f "/etc/glversion" ]; then
 			echo "You have a `cat /tmp/sysinfo/model`, running firmware version `cat /etc/glversion`."
 		fi
-		echo "blue-merle has only been tested with GL-E750 Mudi Version 3.215."
+		echo "blue-merle has only been tested with GL-E750 Mudi Version 4.3.8."
 		echo "The device or firmware version you are using have not been verified to work with blue-merle."
 		echo -n "Would you like to continue on your own risk? (y/N): "
 		read answer
@@ -58,56 +61,14 @@ define Package/blue-merle/preinst
 		fi
 	}
 
-	UPDATE_MCU() {
-		echo "6e6b86e3ad7fec0d5e426eb9a41c51c6f0d6b68a4d341ec553edeeade3e4b470  /tmp/e750-mcu-V1.0.7.bin" > /tmp/e750-mcu.bin.sha256
-		wget -O /tmp/e750-mcu-V1.0.7.bin https://github.com/gl-inet/GL-E750-MCU-instruction/blob/master/e750-mcu-V1.0.7-56a1cad7f0eb8318ebe3c3c46a4cf3ff.bin?raw=true
-		if sha256sum -cs /tmp/e750-mcu.bin.sha256; then
-			ubus call service delete '{"name":"e750_mcu"}'
-			mcu_update /tmp/e750-mcu-V1.0.7.bin
-		else
-			echo "Failed to update MCU, verification of the binary failed."
-			echo "Your device needs to be connected to the Internet in order to download the MCU binary."
-			exit 1
-		fi
-	}
-
-	CHECK_MCUVERSION() {
-		function version { echo "$$@" | cut -d' ' -f2 | awk -F. '{ printf("%d%03d%03d%03d\n", $$1,$$2,$$3,$$4); }'; }
-		mcu_version=`echo \{\"version\": \"1\"} > /dev/ttyS0; sleep 0.1; cat /dev/ttyS0|tr -d '\n'`
-		if [ $$(version "$$mcu_version") -ge $$(version "V 1.0.7") ]; then
-			return 0
-		else
-			echo
-			echo "Your MCU version has not been verified to work with blue-merle."
-						echo "Automatic shutdown may not work."
-						echo "The install script can initiate an update of the MCU."
-						echo "The device will reboot and, after reboot, you need to run opkg install blue-merle again."
-						echo -n "Would you like to update your MCU? (y/N): "
-						read answer
-						case $$answer in
-								Y*) answer=0;;
-								y*) answer=0;;
-								*) answer=1;;
-						esac
-						if [[ "$$answer" -eq 0 ]]; then
-								UPDATE_MCU
-						fi
-				fi
-		}
-
 	if grep -q "GL.iNet GL-E750" /proc/cpuinfo; then
 	    GL_VERSION=$$(cat /etc/glversion)
 	    case $$GL_VERSION in
-	        4.*)
-	            echo Version $$GL_VERSION is not supported
-	            exit 1
-	            ;;
-	        3.215)
+	        4.3.8)
 	            echo Version $$GL_VERSION is supported
-	            CHECK_MCUVERSION
 	            exit 0
 	            ;;
-	        3.*)
+	        4.*)
 	            echo Version $$GL_VERSION is *probably* supported
 	            ABORT_GLVERSION
 	            ;;
@@ -120,32 +81,26 @@ define Package/blue-merle/preinst
 	else
 		ABORT_GLVERSION
 	fi
+
+    # Our volatile-mac service gets started during the installation
+    # but it modifies the client database held by the gl_clients process.
+    # So we stop that process now, have the database put onto volatile storage
+    # and start the service after installation
+    /etc/init.d/gl_clients stop
 endef
 
 define Package/blue-merle/postinst
 	#!/bin/sh
+	uci set switch-button.@main[0].func='sim'
+	uci commit switch-button
 
-	patch -b /www/src/temple/settings/index.js /lib/blue-merle/patches/index.js.patch
-	patch -b /www/src/temple/settings/index.html /lib/blue-merle/patches/index.html.patch
-	patch -b /usr/bin/switchaction /lib/blue-merle/patches/switchaction.patch
-	patch -b /usr/bin/switch_queue /lib/blue-merle/patches/switch_queue.patch
+	/etc/init.d/gl_clients start
 
-	uci set glconfig.switch_button='service'
-	uci set glconfig.switch_button.enable='1'
-	uci set glconfig.switch_button.function='sim'
-	uci commit glconfig
+	echo {\"msg\": \"Successfully installed Blue Merle\"} > /dev/ttyS0
 endef
 
 define Package/blue-merle/postrm
 	#!/bin/sh
-
-	mv /www/src/temple/settings/index.js.orig /www/src/temple/settings/index.js
-	mv /www/src/temple/settings/index.html.orig /www/src/temple/settings/index.html
-	mv /usr/bin/switchaction.orig /usr/bin/switchaction
-	mv /usr/bin/switch_queue.orig /usr/bin/switch_queue
-
-	rm -f /tmp/sim_change_start
-	rm -f /tmp/sim_change_switch
+	uci set switch-button.@main[0].func='tor'
 endef
 $(eval $(call BuildPackage,$(PKG_NAME)))
-

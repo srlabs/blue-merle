@@ -1,0 +1,71 @@
+#!/bin/sh
+
+. /lib/blue-merle/functions.sh
+. /lib/functions/gl_util.sh
+
+rm -f /tmp/blue-merle-stage1
+
+mcu_send_message "Switch pulled.  Continuing..."
+sleep 1
+sim_switch on
+
+leak=0
+
+until gl_modem AT AT+CFUN=0 | grep -q OK
+do
+	mcu_send_message "CFUN=0 failed. Trying again."
+	sleep 1
+done
+
+until gl_modem AT AT+CFUN=4 | grep -q OK
+do
+	leak=1
+	mcu_send_message "CFUN=4 failed. Trying again."
+	sleep 1
+done
+
+if [[ $leak -eq 1 ]]; then
+	mcu_send_message "WARNING:        Reset took longer than expected."
+	sleep 3
+fi
+
+sleep 1
+
+new_imsi=$(READ_IMSI)
+
+if [[ "$old_imsi" == "$new_imsi" ]]; then
+	mcu_send_message "WARNING:        Old IMSI equals new IMSI."
+	sleep 3
+fi
+
+mcu_send_message "Setting random   IMEI"
+python3 /lib/blue-merle/imei_generate.py -r
+
+new_imei=$(READ_IMEI)
+
+if [[ "$old_imei" == "$new_imei" ]]; then
+	mcu_send_message "WARNING:        Old IMEI equals new IMEI."
+	sleep 3
+else
+	mkdir -p /tmp/modem.1-1.2
+	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
+fi
+
+logger -p notice -t blue-merle-toggle "Changed IMEI from ${old_imei} to ${new_imei}"
+
+
+mcu_send_message "The device will shutdown now."
+sleep 3
+mcu_send_message "You should      change your     location before booting again."
+sleep 5
+
+
+i=5
+/sbin/poweroff -d $i
+until  [[ $i -eq 0 ]]
+do
+        i=$((i-1))
+        mcu_send_message "Shutting down... ($i)"
+        sleep 1
+done
+logger -p notice -t blue-merle-toggle "Finished with Stage 2"

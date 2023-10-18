@@ -1,0 +1,73 @@
+#!/bin/sh
+
+. /lib/blue-merle/functions.sh
+. /lib/functions/gl_util.sh
+
+if [ ! -f "/tmp/sim_change_start" ]; then
+	echo 0 > /tmp/sim_change_start
+fi
+
+if [ ! -f "/tmp/sim_change_switch" ]; then
+	sim_switch off
+fi
+
+now=$(date +%s)
+sim_change_last=`cat /tmp/sim_change_start`
+sim_change_diff=$((now-sim_change_last))
+
+if [[ "$sim_change_diff" -lt 60  ]]; then
+	mcu_send_message "Please wait     >1min between   two SIM swaps.  ($sim_change_diff s)"
+	exit 1
+fi
+
+echo "$now" > /tmp/sim_change_start
+
+mcu_send_message "Starting SIM    swap."
+sleep 3
+
+
+## We're disabling this abort functionality for the moment because the switch keeps being blocked and we cannot notice the pulled switch. We could abort by default and require another toggle to continue.
+#i=5
+#until  [[ $i -lt 0 ]]
+#do
+#	mcu_send_message "Pull switch to  abort ($i).     "
+#	i=$((i-1))
+#	sleep 1
+#
+#	CHECK_ABORT
+#done
+#
+#mcu_send_message "Continuing ..."
+#sleep 1
+
+mcu_send_message "Disabling the ME from transmitting and receiving RF signals."
+sleep 3
+
+old_imei=$(READ_IMEI)
+old_imsi=$(READ_IMSI)
+
+#CHECK_ABORT
+
+answer=1
+while [[ "$answer" -eq 1 ]]; do
+	gl_modem AT AT+CFUN=4 | grep -q OK
+	if [[ $? -eq 1 ]]; then
+		mcu_send_message "Disabling failed. Trying again."
+		CHECK_ABORT
+	else
+		answer=0
+		mcu_send_message "Disabled."
+		sleep 2
+	fi
+done
+
+## We generate a random IMEI to prevent a leak of the
+## new SIM's IMSI under the old IMEI in case the modem
+## still talks to the network
+python3 /lib/blue-merle/imei_generate.py -r
+
+
+mcu_send_message "Replace the SIM card. Then pull the switch."
+
+echo done > /tmp/blue-merle-stage1
+logger -p notice -t blue-merle-toggle "Finished with Stage 1"

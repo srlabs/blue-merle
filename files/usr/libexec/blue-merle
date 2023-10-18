@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. /lib/blue-merle/functions.sh
+
+
+show_message() {
+    # There is mcu_send_message() in /lib/functions/gl_util.sh but we don't want to load the file, thinking that it will take too long
+    echo {\"msg\": \"$1\"} > /dev/ttyS0
+}
+
+
+logger -p notice -t blue-merle-libexec  "Libexec $1"
+
+if [ "$1" == "read-imei" ]; then
+    imei="$(READ_IMEI)"
+    echo -n  $imei
+    show_message "My IMEI: $imei"
+
+elif [ "$1" == "read-imsi" ]; then
+    imsi="$(READ_IMSI)"
+    if [ "x$imsi" == "x" ]; then
+        echo "No IMSI found $imsi" >&2
+        exit 1
+    else
+        echo -n  $imsi
+        show_message "My IMSI: $imsi"
+    fi
+
+elif [ "$1" == "random-imei" ]; then
+    flock -n /tmp/blue-merle-imei-generate.lock  timeout 15  /lib/blue-merle/imei_generate.py --random
+    READ_IMEI
+
+elif [ "$1" == "shutdown-modem" ]; then
+    exec gl_modem AT AT+CFUN=4
+
+elif [ "$1" == "shutdown" ]; then
+    echo '{ "msg": "Shutdowing down..." }' > /dev/ttyS0
+    halt -d 5
+    echo -n "Shutting down"
+    poweroff -d 5
+    logger -p notice -t blue-merle-libexec "Shutting down"
+
+elif [ "$1" == "write-imei" ]; then
+    new_imei=$2
+    echo -n  { "action": "write" }
+else
+    echo -n   '{"msg":"Hello, World!"}'
+    #echo 'foo'>&2
+    echo 0
+fi

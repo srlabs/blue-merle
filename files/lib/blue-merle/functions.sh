@@ -2,27 +2,6 @@
 
 # This script provides helper functions for blue-merle
 
-# check that MAC wiping/linking to dev/null is still in place
-CHECKMACSYMLINK () {
-	local loc_file="/etc/init.d/gl_tertf"
-    if [ $(readlink -f "$loc_file") == "/dev/null" ]
-    then 
-        echo "TEST: EXISTS"
-    else
-        echo "TEST: DOES NOT EXIST"
-        cp "$loc_file" "$loc_file.bak" # todo: consider if we need to move this backup elsewhere?
-        ln -sf /dev/null "$loc_file"
-    fi
-}
-
-# Restore gl_tertf from back-up
-RESTORE_GL_TERTF () {
-    local loc_file="/etc/init.d/gl_tertf"
-    local loc_backup="/etc/init.d/gl_tertf.bak"
-    #local loc_location="/etc/init.d"
-    rm "$loc_file"
-    mv "$loc_backup" "$loc_file"
-}
 
 UNICAST_MAC_GEN () {
     loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
@@ -35,7 +14,16 @@ RESET_BSSIDS () {
     uci set wireless.@wifi-iface[1].macaddr=`UNICAST_MAC_GEN`
     uci set wireless.@wifi-iface[0].macaddr=`UNICAST_MAC_GEN`
     uci commit wireless
-    wifi # need to reset wifi for changes to apply
+    # you need to reset wifi for changes to apply, i.e. executing "wifi"
+}
+
+
+# This chaneges the MAC address clients see when connecting to the WiFi spawned by the device.
+# You can check with "arp -a" that your endpoint, e.g. your laptop, sees a different MAC after a reboot of the Mudi.
+RANDOMIZE_MACADDR () {
+    uci set network.@device[1].macaddr=`UNICAST_MAC_GEN`
+    uci commit network
+    # You need to restart the network, i.e. /etc/init.d/network restart
 }
 
 READ_IMEI () {
@@ -82,11 +70,22 @@ READ_IMSI () {
 	echo $imsi
 }
 
+
+SET_IMEI() {
+    imei="$1"
+
+    if [[ ${#imei} -eq 14 ]]; then
+        gl_modem AT AT+EGMR=1,7,${imei}
+    else
+        echo "IMEI is ${#imei} not 14 characters long"
+    fi
+}
+
 CHECK_ABORT () {
         sim_change_switch=`cat /tmp/sim_change_switch`
-        if [[ "$sim_change_switch" = "off" ]]; then   
-                e750-mcu "SIM change      aborted."   
-                sleep 1                               
-                exit 1                                
+        if [[ "$sim_change_switch" = "off" ]]; then
+                echo '{ "msg": "SIM change      aborted." }' > /dev/ttyS0
+                sleep 1
+                exit 1
         fi
 }

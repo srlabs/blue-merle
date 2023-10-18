@@ -44,6 +44,14 @@ while [[ "$answer" -eq 1 ]]; do
 	fi
 done
 
+## We have just disabled the modem so it should not log on to any network.
+## We set a random IMEI now only to have it overwritten very soon after
+## the SIM card has been replaced. We intend to prevent an accidential
+## leak of the new SIM's IMSI with the old IMEI just in case the modem
+## accidentally tried to log in to the network.
+python3 /lib/blue-merle/imei_generate.py -r
+
+
 echo -n "Please now replace the SIM card and press any key to continue. "
 read answer
 
@@ -112,7 +120,8 @@ case $answer in
 	*) answer=1;;
 esac
 if [[ "$answer" -eq 1 ]]; then
-	echo {\"poweroff\": \"1\"} >/tmp/mcu_message && sleep 0.5 && killall -17 e750-mcu
+    echo '{ "msg": "Shutting down..." }' > /dev/ttyS0
+    halt -d 5
 else
 	echo "Resetting modem..."
 	until gl_modem AT AT+QPOWD | grep -q OK
