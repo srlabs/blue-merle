@@ -45,7 +45,7 @@ function make_imei (premei)
 end
 
 function make_random_imei ()
-    local nDigits = 13
+    local nDigits = 14
     local premei = ""
 	for count = 0, nDigits-1 do
 	    premei = premei .. tostring (math.random (0, 9))
