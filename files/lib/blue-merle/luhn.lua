@@ -41,8 +41,6 @@ end
 
 function make_imei (premei)
 	local imei = premei .. tostring(luhn_digit(premei .. "0"))
-	if is_valid_luhn (imei) then print ("Valid " .. imei) end
-
 	return imei
 end
 
