@@ -71,6 +71,16 @@ READ_IMSI () {
 }
 
 
+SET_IMEI() {
+    imei="$1"
+
+    if [[ ${#imei} -eq 14 ]]; then
+        gl_modem AT AT+EGMR=1,7,${imei}
+    else
+        echo "IMEI is ${#imei} not 14 characters long"
+    fi
+}
+
 CHECK_ABORT () {
         sim_change_switch=`cat /tmp/sim_change_switch`
         if [[ "$sim_change_switch" = "off" ]]; then
