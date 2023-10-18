@@ -28,6 +28,11 @@ RANDOMIZE_MACADDR () {
     # You need to restart the network, i.e. /etc/init.d/network restart
 }
 
+READ_ICCID() {
+    gl_modem AT AT+CCID
+}
+
+
 READ_IMEI () {
 	local answer=1
 	while [[ "$answer" -eq 1 ]]; do
