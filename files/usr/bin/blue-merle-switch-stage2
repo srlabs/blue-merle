@@ -61,11 +61,14 @@ sleep 5
 
 
 i=5
-/sbin/poweroff -d $i
 until  [[ $i -eq 0 ]]
 do
         i=$((i-1))
         mcu_send_message "Shutting down... ($i)"
         sleep 1
 done
+
 logger -p notice -t blue-merle-toggle "Finished with Stage 2"
+
+# Note: calling /sbin/poweroff directly results in the device rebooting into a broken state
+echo '{ "poweroff": "1" }' >/dev/ttyS0

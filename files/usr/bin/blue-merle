@@ -121,7 +121,7 @@ case $answer in
 esac
 if [[ "$answer" -eq 1 ]]; then
     echo '{ "msg": "Shutting down..." }' > /dev/ttyS0
-    halt -d 5
+    echo '{ "poweroff": "1" }' > /dev/ttyS0
 else
 	echo "Resetting modem..."
 	until gl_modem AT AT+QPOWD | grep -q OK
