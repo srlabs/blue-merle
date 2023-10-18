@@ -37,7 +37,7 @@ elif [ "$1" == "shutdown" ]; then
     show_message "Shutting down..."
     echo -n "Shutting down"
     logger -p notice -t blue-merle-libexec "Shutting down"
-    echo '{ "poweroff": "1" } > /dev/ttyS0
+    echo '{ "poweroff": "1" }' > /dev/ttyS0
 
 elif [ "$1" == "write-imei" ]; then
     new_imei=$2
