@@ -78,8 +78,14 @@ READ_IMSI () {
 }
 
 
+GENERATE_IMEI() {
+    local seed=$(head -100 /dev/urandom | tr -dc "0123456789" | head -c10)
+    local imei=$(lua /lib/blue-merle/luhn.lua $seed)
+    echo -n $imei
+}
+
 SET_IMEI() {
-    imei="$1"
+    local imei="$1"
 
     if [[ ${#imei} -eq 14 ]]; then
         gl_modem AT AT+EGMR=1,7,${imei}
