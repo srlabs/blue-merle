@@ -113,7 +113,7 @@ You will find the package in `./bin/packages/mips_24kc/base/`
 
 ### IMEI randomization
 
-The Mudi router's baseband unit is a Quectel EP06-E/A Series LTE Cat 6 Mini PCIe [module](https://www.quectel.com/wp-content/uploads/pdfupload/Quectel_EP06_Series_LTE-A_Specification_V1.7.pdf>).
+The Mudi router's baseband unit is a Quectel EP06-E/A Series LTE Cat 6 Mini PCIe [module](https://www.quectel.com/wp-content/uploads/pdfupload/Quectel_EP06_Series_LTE-A_Specification_V1.7.pdf).
 
 The Mudi router's IMEI can be changed by issuing Quectel LTE series-standard AT commands. The AT command to write a new IMEI to a Quectel EP06-E/A-based device is `AT+EGMR`.
 
