@@ -22,12 +22,38 @@ A MCU version >= 1.0.7 is required. The MCU may be updated through the *blue-mer
 
 The online install method requires an **active Internet connection** on your Mudi device to **download up-to-date dependencies**.
 
-Download the [prebuilt v2.0 release package](https://github.com/srlabs/blue-merle/releases/tag/v2.0) and copy it onto your Mudi, preferably into the `/tmp` folder. Then install the package file:
+Download the [prebuilt v2.0 release package](https://github.com/srlabs/blue-merle/releases/download/v2.0/blue-merle_2.0.0-0_mips_24kc.ipk) and copy it onto your Mudi (e.g. via `scp`), preferably into the `/tmp` folder. Then install the package file:
 
 ```sh
 opkg update
 opkg install blue-merle*.ipk
 ```
+
+### Offline install
+
+The offline install method does **not need an active Internet connection** on your Mudi device.
+
+Download the [prebuilt v2.0 offline release package](https://github.com/srlabs/blue-merle/releases/download/v2.0/blue-merle_2.0.0-0_offline_install.zip), then execute the following commands:
+
+```sh
+## Execute the following commands on the computer connected to the Mudi via WiFi / LAN
+
+unzip /path/to/downloaded.zip
+
+# Copy the offline release package to your Mudi
+# -O might be needed due to SSH daemon used by Mudi
+scp -O -r blue_merle_install root@192.168.8.1:/tmp
+
+# Connect to Mudi via SSH
+ssh root@192.168.8.1
+
+## Execute the following commands inside the SSH tunnel
+# Install dependencies and blue-merle
+cd /tmp/blue_merle_install
+./install.sh
+```
+
+**Note**: The offline install package bundles dependencies collected in October 2023. These dependencies could be outdated at the time of installation and might not be compatible with future Mudi firmware versions.
 
 ## Usage
 
