@@ -44,7 +44,7 @@ define Package/blue-merle/preinst
 		if [ -f "/tmp/sysinfo/model" ] && [ -f "/etc/glversion" ]; then
 			echo "You have a `cat /tmp/sysinfo/model`, running firmware version `cat /etc/glversion`."
 		fi
-		echo "blue-merle has only been tested with GL-E750 Mudi Versions 4.3.8. - 4.3.12"
+		echo "blue-merle has only been tested with GL-E750 Mudi Versions up to 4.3.17"
 		echo "The device or firmware version you are using have not been verified to work with blue-merle."
 		echo -n "Would you like to continue on your own risk? (y/N): "
 		read answer
@@ -72,6 +72,11 @@ define Package/blue-merle/preinst
 	            exit 0
 	            ;;
 		4.3.12)
+		    echo Version $$GL_VERSION is supported but includes known vulnerabilities please update to latest version
+
+		    exit 0
+		    ;;
+		4.3.17)
 		    echo Version $$GL_VERSION is supported
 		    exit 0
 		    ;;
