@@ -11,7 +11,7 @@ The *blue-merle* software package enhances anonymity and reduces forensic tracea
 
 ## Compatibility
 
-**This README covers the v2.0 release**, which has been verified to work with GL-E750 Mudi version 4.3.8.
+**This README covers the v2.0 release**, which has been verified to work with GL-E750 Mudi version 4.3.8 - 4.3.12 .
 Refer back to the [v1.0 README file](https://github.com/srlabs/blue-merle/tree/cb4d73731fe432e0f101284307101c250ca4b845) for information about the first release, which works on older firmware releases.
 
 A MCU version >= 1.0.7 is required. The MCU may be updated through the *blue-merle* package installer or [manually](https://github.com/gl-inet/GL-E750-MCU-instruction). SRLabs cannot guarantee that the project assets within this Git repository will be compatible with future firmware updates.
