@@ -57,7 +57,7 @@ jobs:
         run: |
           mkdir package-output
           rsync -av sdk/"${SDK_FILENAME%.tar.xz}"/bin/packages/mips_24kc/base/"${{ env.owrt-package }}"*.ipk package-output/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.generate-name.outputs.artifact-name }}
           path: package-output/
