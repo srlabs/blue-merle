@@ -18,7 +18,7 @@ A MCU version >= 1.0.7 is required. The MCU may be updated through the *blue-mer
 
 ## Installation
 
-### Online install
+### Online install & upgrade
 
 The online install method requires an **active Internet connection** on your Mudi device to **download up-to-date dependencies**.
 
@@ -27,6 +27,10 @@ Download the [prebuilt v2.0 release package](https://github.com/srlabs/blue-merl
 ```sh
 opkg update
 opkg install blue-merle*.ipk
+```
+To uprade blue-merle, download the newest blue-merle*.ipk, copy it to your Mudi and reinstall with:
+```sh
+opkg install --force-reinstall blue-merle*.ipk
 ```
 
 ### Offline install
