@@ -54,6 +54,9 @@ else
 	sleep 5
 	mkdir -p /tmp/modem.1-1.2
 	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
+	# prevent imei leak via the LPA
+	echo "$new_imei" > /root/esim/imei
+	shred -u /root/esim/log.txt # unclear if the imei/imsi will be loged here, just a precaution
 fi
 
 logger -p notice -t blue-merle-toggle "Changed IMEI from ${old_imei} to ${new_imei}"
