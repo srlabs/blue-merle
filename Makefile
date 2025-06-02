@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=blue-merle
-PKG_VERSION:=2.0.4
+PKG_VERSION:=2.0.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Matthias <matthias@srlabs.de>
@@ -44,7 +44,7 @@ define Package/blue-merle/preinst
 		if [ -f "/tmp/sysinfo/model" ] && [ -f "/etc/glversion" ]; then
 			echo "You have a `cat /tmp/sysinfo/model`, running firmware version `cat /etc/glversion`."
 		fi
-		echo "blue-merle has only been tested with GL-E750 Mudi Versions up to 4.3.19"
+		echo "blue-merle has only been tested with GL-E750 Mudi Versions up to 4.3.26"
 		echo "The device or firmware version you are using have not been verified to work with blue-merle."
 		echo -n "Would you like to continue on your own risk? (y/N): "
 		read answer
@@ -63,7 +63,7 @@ define Package/blue-merle/preinst
 	if grep -q "GL.iNet GL-E750" /proc/cpuinfo; then
 	    GL_VERSION=$$(cat /etc/glversion)
 	    case $$GL_VERSION in
-		4.3.19)
+		4.3.26)
 		    echo Version $$GL_VERSION is supported
 		    exit 0
 		    ;;
