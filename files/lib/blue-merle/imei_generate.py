@@ -28,10 +28,13 @@ modes.add_argument("-r", "--random", help="Sets random IMEI",
 
 # Example IMEI: 490154203237518
 imei_length = 14  # without validation digit
-imei_prefix = ["35674108", "35290611", "35397710", "35323210", "35384110",
-               "35982748", "35672011", "35759049", "35266891", "35407115",
-               "35538025", "35480910", "35324590", "35901183", "35139729",
-               "35479164"]
+imei_prefix = [
+    "35729274",  # Apple iPhone 15
+    "35169743",  # Apple iPhone 15 Pro
+    "35663771",  # Samsung Galaxy S23
+    "35161058",  # Google Pixel 7
+    "35154570",  # Google Pixel 8
+]
 
 verbose = False
 mode = None
