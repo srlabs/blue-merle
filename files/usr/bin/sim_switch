@@ -1,7 +1,8 @@
+mkdir -p /run/blue-merle && chmod 0700 /run/blue-merle
 if [ "$1" = "on" ];then
-	echo "on" > /tmp/sim_change_switch
+	echo "on" > /run/blue-merle/sim_change_switch
 elif [ "$1" = "off" ];then
-	echo "off" > /tmp/sim_change_switch
+	echo "off" > /run/blue-merle/sim_change_switch
 else
-	echo "off" > /tmp/sim_change_switch
+	echo "off" > /run/blue-merle/sim_change_switch
 fi

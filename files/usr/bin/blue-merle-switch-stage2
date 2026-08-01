@@ -3,7 +3,7 @@
 . /lib/blue-merle/functions.sh
 . /lib/functions/gl_util.sh
 
-rm -f /tmp/blue-merle-stage1
+rm -f /run/blue-merle/stage1
 
 mcu_send_message "Switch pulled.  Continuing..."
 sleep 1

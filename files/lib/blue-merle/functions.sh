@@ -2,6 +2,10 @@
 
 # This script provides helper functions for blue-merle
 
+# Rotation control state lives in a root-only dir (0700), not world-writable /tmp
+# (CWE-377 / CWE-379).
+mkdir -p /run/blue-merle && chmod 0700 /run/blue-merle
+
 
 UNICAST_MAC_GEN () {
     loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
@@ -95,7 +99,7 @@ SET_IMEI() {
 }
 
 CHECK_ABORT () {
-        sim_change_switch=`cat /tmp/sim_change_switch`
+        sim_change_switch=`cat /run/blue-merle/sim_change_switch`
         if [[ "$sim_change_switch" = "off" ]]; then
                 echo '{ "msg": "SIM change      aborted." }' > /dev/ttyS0
                 sleep 1

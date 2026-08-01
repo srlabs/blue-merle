@@ -3,16 +3,16 @@
 . /lib/blue-merle/functions.sh
 . /lib/functions/gl_util.sh
 
-if [ ! -f "/tmp/sim_change_start" ]; then
-	echo 0 > /tmp/sim_change_start
+if [ ! -f "/run/blue-merle/sim_change_start" ]; then
+	echo 0 > /run/blue-merle/sim_change_start
 fi
 
-if [ ! -f "/tmp/sim_change_switch" ]; then
+if [ ! -f "/run/blue-merle/sim_change_switch" ]; then
 	sim_switch off
 fi
 
 now=$(date +%s)
-sim_change_last=`cat /tmp/sim_change_start`
+sim_change_last=`cat /run/blue-merle/sim_change_start`
 sim_change_diff=$((now-sim_change_last))
 
 if [[ "$sim_change_diff" -lt 60  ]]; then
@@ -20,7 +20,7 @@ if [[ "$sim_change_diff" -lt 60  ]]; then
 	exit 1
 fi
 
-echo "$now" > /tmp/sim_change_start
+echo "$now" > /run/blue-merle/sim_change_start
 
 mcu_send_message "Starting SIM    swap."
 sleep 3
@@ -69,5 +69,5 @@ timeout 15  python3 /lib/blue-merle/imei_generate.py -r
 
 mcu_send_message "Replace the SIM card. Then pull the switch."
 
-echo done > /tmp/blue-merle-stage1
+echo done > /run/blue-merle/stage1
 logger -p notice -t blue-merle-toggle "Finished with Stage 1"
