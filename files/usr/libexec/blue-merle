@@ -3,9 +3,16 @@
 . /lib/blue-merle/functions.sh
 
 
+_mcu_json_escape() {
+    # Escape backslash and double-quote so text (e.g. modem output) can't break
+    # out of the JSON string sent to the MCU. (CWE-116 / CWE-74)
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 show_message() {
     # There is mcu_send_message() in /lib/functions/gl_util.sh but we don't want to load the file, thinking that it will take too long
-    echo {\"msg\": \"$1\"} > /dev/ttyS0
+    msg=$(_mcu_json_escape "$1")
+    echo {\"msg\": \"$msg\"} > /dev/ttyS0
 }
 
 
