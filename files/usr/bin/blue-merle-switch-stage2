@@ -50,7 +50,7 @@ if [[ "$old_imei" == "$new_imei" ]]; then
 else
 	#FIXME old_imei is not the real old imei because in stage1 its already generated a new one
 	# so this is a bit missleading but for the prupose of visualy see the change it works
-	mcu_send_message  "IMEI Old:...... ${old_imei}IMEI New:...... ${new_imei}"
+	mcu_send_message  "IMEI rotated.   New IMEI active."
 	sleep 5
 	mkdir -p /tmp/modem.1-1.2
 	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
