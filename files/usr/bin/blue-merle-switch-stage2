@@ -59,7 +59,7 @@ else
 	shred -u /root/esim/log.txt # unclear if the imei/imsi will be loged here, just a precaution
 fi
 
-logger -p notice -t blue-merle-toggle "Changed IMEI from ${old_imei} to ${new_imei}"
+logger -p notice -t blue-merle-toggle "IMEI rotated"
 
 
 mcu_send_message "The device will shutdown now."
