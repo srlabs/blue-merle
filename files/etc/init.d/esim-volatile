@@ -1,0 +1,54 @@
+#!/bin/sh /etc/rc.common
+# esim-volatile — keep the IMEI record + LPA log in RAM, never on flash.
+#
+# blue-merle and the GL.iNet LPA write /root/esim/{imei,log.txt}, which land on
+# the UBIFS overlay (/dev/ubi0_1). UBIFS is log-structured: an in-place overwrite
+# (shred, or dd conv=notrunc) cannot erase the old block — it allocates a NEW one
+# and leaves the previous content recoverable until wear-levelling reclaims it.
+# Every IMEI swap therefore leaves a recoverable copy of the record on the NAND.
+#
+# Mounting /root/esim on tmpfs makes these writes RAM-only: nothing survives a
+# reboot and no IMEI/LPA-log residue ever reaches the flash. The eSIM PROFILE
+# store (db/) is the only part that must persist; it is kept on flash at $PERSIST
+# and bind-mounted back into the tmpfs, so eSIM profiles are preserved.
+#
+# Runs before blue-merle (START=10), the network stack, and any LPA activity.
+START=08
+STOP=99
+
+VOL=/root/esim
+PERSIST=/etc/blue-merle/esim-db
+
+_mounted() { mount 2>/dev/null | grep -q " on $VOL type tmpfs"; }
+
+start() {
+    _mounted && return 0
+    mkdir -p "$PERSIST" "$VOL"
+
+    # One-time migration: move any existing on-flash eSIM profile db into the
+    # persistent store (no-op on physical-SIM devices where db/ is empty).
+    if [ -d "$VOL/db" ] && [ ! -e "$PERSIST/.migrated" ]; then
+        cp -a "$VOL/db/." "$PERSIST/" 2>/dev/null
+        : > "$PERSIST/.migrated"
+    fi
+
+    # Preserve the non-sensitive LPA version tag to re-seed the tmpfs.
+    _ver=""
+    [ -f "$VOL/ver" ] && _ver=$(cat "$VOL/ver" 2>/dev/null)
+
+    mount -t tmpfs -o mode=0700,size=4M tmpfs "$VOL" || {
+        logger -p err -t esim-volatile "tmpfs mount FAILED — falling back to flash"
+        return 1
+    }
+    mkdir -p "$VOL/db"
+    mount --bind "$PERSIST" "$VOL/db" 2>/dev/null
+    [ -n "$_ver" ] && printf '%s' "$_ver" > "$VOL/ver"
+    logger -p notice -t esim-volatile "tmpfs mounted over $VOL (imei+log RAM-only; db persisted)"
+}
+
+boot() { start "$@"; }
+
+stop() {
+    umount "$VOL/db" 2>/dev/null
+    umount "$VOL" 2>/dev/null
+}

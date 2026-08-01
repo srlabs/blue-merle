@@ -95,6 +95,10 @@ define Package/blue-merle/postinst
 
 	/etc/init.d/gl_clients start
 
+	# Keep the IMEI record + LPA log in RAM only; shred/overwrite cannot erase them on UBIFS.
+	/etc/init.d/esim-volatile enable
+	/etc/init.d/esim-volatile start
+
 	echo {\"msg\": \"Successfully installed Blue Merle\"} > /dev/ttyS0
 endef
 

@@ -109,7 +109,8 @@ else
 	echo "$new_imei" > /tmp/modem.1-1.2/modem-imei
 	# prevent imei leak via the LPA
         echo "$new_imei" > /root/esim/imei
-        shred -u /root/esim/log.txt # unclear if the imei/imsi will be loged here, just a precaution
+        # /root/esim is a tmpfs (see /etc/init.d/esim-volatile) so the log never reaches flash.
+        rm -f /root/esim/log.txt
 fi
 
 echo "You should now reset the modem or shutdown the device."
