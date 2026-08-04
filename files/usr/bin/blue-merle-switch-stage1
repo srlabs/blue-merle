@@ -25,6 +25,20 @@ echo "$now" > /run/blue-merle/sim_change_start
 mcu_send_message "Starting SIM    swap."
 sleep 3
 
+# From here on we may leave the modem disabled / mid-write if we are
+# interrupted (SIM/module pulled, power loss, killed process). Restore the
+# modem on any unexpected exit unless we reach the end of this stage, where
+# leaving the radio disabled is the intended handoff to the physical SIM
+# swap (F-BRICK, CWE-364/665).
+stage1_committed=0
+STAGE1_TRAP_CLEANUP () {
+	if [ "$stage1_committed" != "1" ]; then
+		logger -p notice -t blue-merle-toggle "stage1 exited early; running SAFE_RESTORE_MODEM"
+		SAFE_RESTORE_MODEM
+	fi
+}
+trap STAGE1_TRAP_CLEANUP EXIT INT TERM HUP
+
 
 ## We're disabling this abort functionality for the moment because the switch keeps being blocked and we cannot notice the pulled switch. We could abort by default and require another toggle to continue.
 #i=5
@@ -45,6 +59,7 @@ sleep 3
 
 old_imei=$(READ_IMEI)
 old_imsi=$(READ_IMSI)
+SAVE_KNOWN_GOOD_IMEI "$old_imei"
 
 #CHECK_ABORT
 
@@ -64,10 +79,27 @@ done
 ## We generate a random IMEI to prevent a leak of the
 ## new SIM's IMSI under the old IMEI in case the modem
 ## still talks to the network
+CHECK_ABORT
+echo 1 > /run/blue-merle/imei_write_pending
 timeout 15  python3 /lib/blue-merle/imei_generate.py -r
+temp_imei_rc=$?
+
+if [ "$temp_imei_rc" -ne 0 ]; then
+	mcu_send_message "WARNING:        Temp IMEI write failed. Restoring."
+	logger -p notice -t blue-merle-toggle "stage1 temp IMEI write failed (rc=$temp_imei_rc)"
+	# stage1_committed is still 0 here, so STAGE1_TRAP_CLEANUP runs
+	# SAFE_RESTORE_MODEM for us on the way out.
+	exit 1
+fi
+rm -f /run/blue-merle/imei_write_pending
 
 
 mcu_send_message "Replace the SIM card. Then pull the switch."
+
+# Past this point the radio is intentionally left disabled awaiting the
+# physical SIM swap + stage2 -- that is success, not a wedged modem, so the
+# trap above must no longer call SAFE_RESTORE_MODEM.
+stage1_committed=1
 
 echo done > /run/blue-merle/stage1
 logger -p notice -t blue-merle-toggle "Finished with Stage 1"
