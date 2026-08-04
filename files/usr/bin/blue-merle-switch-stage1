@@ -15,7 +15,10 @@ now=$(date +%s)
 sim_change_last=`cat /run/blue-merle/sim_change_start`
 sim_change_diff=$((now-sim_change_last))
 
-if [[ "$sim_change_diff" -lt 60  ]]; then
+# F-CLOCK (CWE-754): only rate-limit on a sane, non-negative delta. If the clock
+# jumped backwards (RTC reset / before NTP sync) now-stored can go negative, which
+# would otherwise wedge the "please wait" guard and block every swap indefinitely.
+if [ "$sim_change_diff" -ge 0 ] && [ "$sim_change_diff" -lt 60 ]; then
 	mcu_send_message "Please wait     >1min between   two SIM swaps.  ($sim_change_diff s)"
 	exit 1
 fi
