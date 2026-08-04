@@ -124,3 +124,58 @@ CHECK_ABORT () {
                 exit 1
         fi
 }
+
+# --- Recovery from an aborted or failed IMEI write (F-BRICK, CWE-364/665) ---
+#
+# Pulling the SIM/module, or an AT/EGMR write failing partway through,
+# can otherwise leave the modem wedged: SIM power off, radio disabled
+# (CFUN=4), and no confirmed IMEI. The two helpers below let a stage
+# remember the last known-good, already-confirmed IMEI before it attempts
+# to change it, and put the modem back into a known-good state (SIM
+# powered, radio enabled, previous IMEI restored if the new write was
+# never confirmed) whenever a stage aborts, fails, or exits unexpectedly.
+
+# Record the last confirmed-good IMEI on tmpfs only (/run/blue-merle is
+# root-only 0700, never written to flash or logged) so SAFE_RESTORE_MODEM
+# has something to roll back to.
+SAVE_KNOWN_GOOD_IMEI () {
+        local imei="$1"
+        if [ -n "$imei" ]; then
+                echo -n "$imei" > /run/blue-merle/imei_known_good
+        fi
+}
+
+# Bring the modem back to a known-good state. Safe to call more than once
+# and safe to call even if nothing was actually in progress.
+SAFE_RESTORE_MODEM () {
+        logger -p notice -t blue-merle-toggle "SAFE_RESTORE_MODEM: restoring modem state"
+
+        # Make sure the SIM is powered regardless of where we got interrupted.
+        sim_switch on >/dev/null 2>&1
+
+        # If an EGMR write was started but never confirmed, restore the
+        # last known-good IMEI instead of leaving a half-written value.
+        if [ -f /run/blue-merle/imei_write_pending ]; then
+                if [ -f /run/blue-merle/imei_known_good ]; then
+                        restore_imei=`cat /run/blue-merle/imei_known_good`
+                        if [ -n "$restore_imei" ]; then
+                                SET_IMEI "$restore_imei" >/dev/null 2>&1
+                        fi
+                fi
+                rm -f /run/blue-merle/imei_write_pending
+        fi
+
+        # Re-enable full functionality so the modem attaches again instead
+        # of being left disabled (CFUN=4).
+        restore_tries=3
+        while [ $restore_tries -gt 0 ]; do
+                gl_modem AT AT+CFUN=1 | grep -q OK && break
+                restore_tries=$((restore_tries-1))
+                sleep 1
+        done
+
+        # Don't let a stray reboot believe an interrupted stage1 completed.
+        rm -f /run/blue-merle/stage1
+
+        logger -p notice -t blue-merle-toggle "SAFE_RESTORE_MODEM: done"
+}
