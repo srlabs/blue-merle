@@ -5,6 +5,20 @@
 
 rm -f /run/blue-merle/stage1
 
+# From here on the modem may be left disabled or mid-EGMR-write if we are
+# interrupted (SIM/module pulled again, power loss, killed process). Restore
+# it on any unexpected exit; stage2_committed is set once the rotation (or a
+# clean fallback) has actually completed, so a normal successful run does
+# not re-touch the modem right before poweroff (F-BRICK, CWE-364/665).
+stage2_committed=0
+STAGE2_TRAP_CLEANUP () {
+	if [ "$stage2_committed" != "1" ]; then
+		logger -p notice -t blue-merle-toggle "stage2 exited early; running SAFE_RESTORE_MODEM"
+		SAFE_RESTORE_MODEM
+	fi
+}
+trap STAGE2_TRAP_CLEANUP EXIT INT TERM HUP
+
 mcu_send_message "Switch pulled.  Continuing..."
 sleep 1
 sim_switch on
@@ -29,6 +43,11 @@ if [[ $leak -eq 1 ]]; then
 	sleep 3
 fi
 
+# Safe checkpoint: radio is confirmed re-enabled (CFUN=4) and nothing
+# destructive has happened yet on this side of the swap, so an abort here
+# is cheap -- SAFE_RESTORE_MODEM just needs to bring CFUN back to 1.
+CHECK_ABORT
+
 sleep 1
 
 new_imsi=$(READ_IMSI)
@@ -38,11 +57,29 @@ if [[ "$old_imsi" == "$new_imsi" ]]; then
 	sleep 3
 fi
 old_imei=$(READ_IMEI)
+SAVE_KNOWN_GOOD_IMEI "$old_imei"
 mcu_send_message "Setting random   IMEI"
+echo 1 > /run/blue-merle/imei_write_pending
 timeout 15 python3 /lib/blue-merle/imei_generate.py -r
+imei_write_rc=$?
 
 new_imei=$(READ_IMEI)
 
+# Guard the EGMR write (F-BRICK, CWE-364/665): only trust it if the helper
+# reported success AND a re-read actually returned an IMEI. Otherwise we may
+# have a half-written IMEI -- restore the last known-good one and bring the
+# radio back up instead of silently continuing as if nothing happened.
+imei_write_ok=1
+if [ "$imei_write_rc" -ne 0 ] || [ -z "$new_imei" ]; then
+	imei_write_ok=0
+	mcu_send_message "WARNING:        IMEI write      failed. Restoring."
+	logger -p notice -t blue-merle-toggle "EGMR write failed (rc=$imei_write_rc); running SAFE_RESTORE_MODEM"
+	SAFE_RESTORE_MODEM
+	sleep 3
+fi
+
+if [ "$imei_write_ok" -eq 1 ]; then
+	rm -f /run/blue-merle/imei_write_pending
 
 if [[ "$old_imei" == "$new_imei" ]]; then
 	mcu_send_message "WARNING:        Old IMEI equals new IMEI."
@@ -59,6 +96,13 @@ else
 	# /root/esim is a tmpfs (see /etc/init.d/esim-volatile) so the log never reaches flash.
 	rm -f /root/esim/log.txt
 fi
+
+fi
+
+# Whatever path above ran, the modem is now in a known state (rotated,
+# unchanged-but-fine, or restored) -- past this point the trap no longer
+# needs to call SAFE_RESTORE_MODEM.
+stage2_committed=1
 
 logger -p notice -t blue-merle-toggle "IMEI rotated"
 
