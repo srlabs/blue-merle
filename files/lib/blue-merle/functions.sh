@@ -165,6 +165,11 @@ SAFE_RESTORE_MODEM () {
                 rm -f /run/blue-merle/imei_write_pending
         fi
 
+        # The known-good IMEI has served its purpose here; don't leave the
+        # identifier sitting in a file (tmpfs/root-only, but still forensic
+        # hygiene -- consistent with the rest of the package).
+        rm -f /run/blue-merle/imei_known_good
+
         # Re-enable full functionality so the modem attaches again instead
         # of being left disabled (CFUN=4).
         restore_tries=3
