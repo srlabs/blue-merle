@@ -105,4 +105,22 @@ CHECK_ABORT () {
                 sleep 1
                 exit 1
         fi
+
+        # Generic, switch-independent abort request (F-BRICK / CWE-364/665).
+        # The check above only fires while stage1 is running with the
+        # physical switch already flipped back to "off" -- during stage2 the
+        # switch is already "off" by definition (that is what started it), so
+        # it can never signal an abort there. A caller (or a future UI) can
+        # instead `touch /run/blue-merle/abort_requested` at any time; every
+        # CHECK_ABORT call site in either stage will notice it at the next
+        # safe checkpoint, restore the modem, and stop before the next
+        # destructive step.
+        if [ -f /run/blue-merle/abort_requested ]; then
+                rm -f /run/blue-merle/abort_requested
+                echo '{ "msg": "SIM change      aborted." }' > /dev/ttyS0
+                logger -p notice -t blue-merle-toggle "abort_requested set; aborting swap cleanly"
+                SAFE_RESTORE_MODEM
+                sleep 1
+                exit 1
+        fi
 }
