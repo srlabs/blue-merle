@@ -135,14 +135,14 @@ CHECK_ABORT () {
 # powered, radio enabled, previous IMEI restored if the new write was
 # never confirmed) whenever a stage aborts, fails, or exits unexpectedly.
 
-# Record the last confirmed-good IMEI on tmpfs only (/run/blue-merle is
-# root-only 0700, never written to flash or logged) so SAFE_RESTORE_MODEM
-# has something to roll back to.
+# Record the last confirmed-good IMEI in a shell variable only (process
+# memory) -- never write the identifier to the filesystem. /run/blue-merle is
+# on the root overlay (UBIFS/flash) on this hardware, not tmpfs, and rm cannot
+# securely erase there, so a file would leave a recoverable IMEI on flash.
+# SAFE_RESTORE_MODEM always runs in the same shell (guard or EXIT trap), so an
+# in-memory value is enough to roll back to.
 SAVE_KNOWN_GOOD_IMEI () {
-        local imei="$1"
-        if [ -n "$imei" ]; then
-                echo -n "$imei" > /run/blue-merle/imei_known_good
-        fi
+        BM_KNOWN_GOOD_IMEI="$1"
 }
 
 # Bring the modem back to a known-good state. Safe to call more than once
@@ -154,21 +154,14 @@ SAFE_RESTORE_MODEM () {
         sim_switch on >/dev/null 2>&1
 
         # If an EGMR write was started but never confirmed, restore the
-        # last known-good IMEI instead of leaving a half-written value.
+        # last known-good IMEI (kept in memory, never on disk) instead of
+        # leaving a half-written value.
         if [ -f /run/blue-merle/imei_write_pending ]; then
-                if [ -f /run/blue-merle/imei_known_good ]; then
-                        restore_imei=`cat /run/blue-merle/imei_known_good`
-                        if [ -n "$restore_imei" ]; then
-                                SET_IMEI "$restore_imei" >/dev/null 2>&1
-                        fi
+                if [ -n "$BM_KNOWN_GOOD_IMEI" ]; then
+                        SET_IMEI "$BM_KNOWN_GOOD_IMEI" >/dev/null 2>&1
                 fi
                 rm -f /run/blue-merle/imei_write_pending
         fi
-
-        # The known-good IMEI has served its purpose here; don't leave the
-        # identifier sitting in a file (tmpfs/root-only, but still forensic
-        # hygiene -- consistent with the rest of the package).
-        rm -f /run/blue-merle/imei_known_good
 
         # Re-enable full functionality so the modem attaches again instead
         # of being left disabled (CFUN=4).

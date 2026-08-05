@@ -104,12 +104,6 @@ fi
 # needs to call SAFE_RESTORE_MODEM.
 stage2_committed=1
 
-# Drop the known-good IMEI now that the rotation is committed -- no reason to
-# keep the identifier lying around in /run until the next reboot (forensic
-# hygiene, consistent with PR-A). SAFE_RESTORE_MODEM does the same on the
-# abort/failure paths that never reach this point.
-rm -f /run/blue-merle/imei_known_good
-
 logger -p notice -t blue-merle-toggle "IMEI rotated"
 
 
