@@ -1,0 +1,15 @@
+
+config mac 'mac'
+	# Master switch for vendor-mimicking MAC/BSSID randomization.
+	# Off by default: no behaviour change unless you opt in.
+	option mimic '0'
+	# coherent = one vendor OUI, sequential across every interface (like real
+	# single-vendor hardware); split = independent router/client vendor OUIs.
+	option mode 'coherent'
+	# When the GL firmware provides its own MAC randomization (newer versions),
+	# skip ours to avoid randomizing twice / fighting the stock feature.
+	option auto_disable_native '1'
+	# Comma-separated vendor filter, empty = use all vendors from the OUI table.
+	# e.g. ap_vendors='tp-link,netgear'  client_vendors='apple,samsung'
+	option ap_vendors ''
+	option client_vendors ''

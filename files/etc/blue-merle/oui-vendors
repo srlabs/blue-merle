@@ -1,0 +1,50 @@
+# blue-merle MAC mimicry OUI table
+#
+# Used when mac.mimic is enabled (see /etc/config/blue-merle). Instead of a
+# purely random locally-administered MAC, blue-merle draws a real vendor OUI
+# from this list and appends 3 random bytes, so the address looks like ordinary
+# consumer hardware rather than an obviously-randomized one.
+#
+# Format:  <vendor>  <OUI>  <type>
+#   type = ap      -> used for the router BSSID (RESET_BSSIDS)
+#   type = client  -> used for the client-facing / upstream MAC (RANDOMIZE_MACADDR)
+#
+# These are public IEEE OUI assignments, given as examples. Add or remove rows
+# to fit where you travel — e.g. keep only vendors common in your region so the
+# device blends in. Lines starting with # and blank lines are ignored.
+#
+# Note: this only changes the OUI. The radio's advertised capabilities and
+# beacon fingerprint still come from the chipset/driver, so prefer vendors that
+# shipped hardware of the same Wi-Fi generation (and ideally chipset family) as
+# your device. See the "Limitations" note in the docs.
+#
+# Use only full MA-L (/24) OUIs. MA-M and MA-S prefixes share their first three
+# octets among 16 or 4096 companies, so a random tail on such a prefix lands in a
+# different company's block. Most web OUI lookups won't tell you a prefix is
+# shared; when in doubt, check the IEEE registry.
+# Restrict which vendors are used from the LuCI page or via
+#   uci set blue-merle.mac.ap_vendors='tp-link,netgear'
+
+# --- routers / access points (BSSID) ---
+tp-link   50:C7:BF   ap
+tp-link   EC:08:6B   ap
+netgear   20:4E:7F   ap
+netgear   A0:40:A0   ap
+asus      2C:56:DC   ap
+asus      AC:22:0B   ap
+cisco     6C:03:B5   ap
+linksys   00:14:BF   ap
+dlink     1C:BD:B9   ap
+avm       3C:A6:2F   ap
+
+# --- phones / client devices (client MAC) ---
+apple     00:1B:63   client
+apple     AC:BC:32   client
+samsung   00:16:6C   client
+samsung   38:8A:06   client
+xiaomi    64:CC:2E   client
+huawei    48:46:FB   client
+google    3C:5A:B4   client
+intel     34:13:E8   client
+intel     00:1B:21   client
+oneplus   C0:EE:FB   client
