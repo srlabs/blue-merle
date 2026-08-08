@@ -92,7 +92,10 @@ SET_IMEI() {
     local imei="$1"
 
     if [[ ${#imei} -eq 14 ]]; then
-        gl_modem AT AT+EGMR=1,7,${imei}
+        # The IMEI must be quoted, like imei_generate.py's set_imei() does
+        # (AT+EGMR=1,7,"<imei>"); without the quotes the EM060K rejects the
+        # write silently, so an unquoted restore would set nothing.
+        gl_modem AT AT+EGMR=1,7,\"${imei}\"
     else
         echo "IMEI is ${#imei} not 14 characters long"
     fi
@@ -153,12 +156,21 @@ SAFE_RESTORE_MODEM () {
         # Make sure the SIM is powered regardless of where we got interrupted.
         sim_switch on >/dev/null 2>&1
 
-        # If an EGMR write was started but never confirmed, restore the
-        # last known-good IMEI (kept in memory, never on disk) instead of
-        # leaving a half-written value.
+        # If an EGMR write was left unconfirmed, restore the last known-good IMEI
+        # (kept in memory, never on disk) instead of leaving a half-written value.
         if [ -f /run/blue-merle/imei_write_pending ]; then
                 if [ -n "$BM_KNOWN_GOOD_IMEI" ]; then
-                        SET_IMEI "$BM_KNOWN_GOOD_IMEI" >/dev/null 2>&1
+                        # EGMR writes are only accepted with the radio disabled,
+                        # so force CFUN=4 before restoring (sim_switch on above may
+                        # have re-enabled it); the CFUN=1 step below brings it back.
+                        gl_modem AT AT+CFUN=4 >/dev/null 2>&1
+                        # AT+EGMR=1,7 takes the 14-digit IMEI body and recomputes
+                        # the Luhn check digit itself; READ_IMEI returns the full
+                        # 15 digits, so write the first 14 (same body reproduces
+                        # the identical IMEI). Passing 15 would be rejected by
+                        # SET_IMEI's length check and silently restore nothing.
+                        restore_imei=$(printf '%s' "$BM_KNOWN_GOOD_IMEI" | cut -c1-14)
+                        SET_IMEI "$restore_imei" >/dev/null 2>&1
                 fi
                 rm -f /run/blue-merle/imei_write_pending
         fi
