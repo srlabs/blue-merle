@@ -3,27 +3,47 @@
 . /lib/blue-merle/functions.sh
 . /lib/functions/gl_util.sh
 
-if [ ! -f "/tmp/sim_change_start" ]; then
-	echo 0 > /tmp/sim_change_start
+if [ ! -f "/run/blue-merle/sim_change_start" ]; then
+	echo 0 > /run/blue-merle/sim_change_start
 fi
 
-if [ ! -f "/tmp/sim_change_switch" ]; then
+if [ ! -f "/run/blue-merle/sim_change_switch" ]; then
 	sim_switch off
 fi
 
 now=$(date +%s)
-sim_change_last=`cat /tmp/sim_change_start`
+sim_change_last=`cat /run/blue-merle/sim_change_start`
 sim_change_diff=$((now-sim_change_last))
 
-if [[ "$sim_change_diff" -lt 60  ]]; then
+# F-CLOCK (CWE-754): only rate-limit on a sane, non-negative delta. If the clock
+# jumped backwards (RTC reset / before NTP sync) now-stored can go negative, which
+# would otherwise wedge the "please wait" guard and block every swap indefinitely.
+if [ "$sim_change_diff" -ge 0 ] && [ "$sim_change_diff" -lt 60 ]; then
 	mcu_send_message "Please wait     >1min between   two SIM swaps.  ($sim_change_diff s)"
 	exit 1
 fi
 
-echo "$now" > /tmp/sim_change_start
+echo "$now" > /run/blue-merle/sim_change_start
+
+# Clear any stale abort-window marker from a previously crashed run.
+rm -f /run/blue-merle/restore_original
 
 mcu_send_message "Starting SIM    swap."
-sleep 3
+ABORT_SLEEP 3
+
+# From here on we may leave the modem disabled / mid-write if we are
+# interrupted (SIM/module pulled, power loss, killed process). Restore the
+# modem on any unexpected exit unless we reach the end of this stage, where
+# leaving the radio disabled is the intended handoff to the physical SIM
+# swap (F-BRICK, CWE-364/665).
+stage1_committed=0
+STAGE1_TRAP_CLEANUP () {
+	if [ "$stage1_committed" != "1" ]; then
+		logger -p notice -t blue-merle-toggle "stage1 exited early; running SAFE_RESTORE_MODEM"
+		SAFE_RESTORE_MODEM
+	fi
+}
+trap STAGE1_TRAP_CLEANUP EXIT INT TERM HUP
 
 
 ## We're disabling this abort functionality for the moment because the switch keeps being blocked and we cannot notice the pulled switch. We could abort by default and require another toggle to continue.
@@ -41,19 +61,25 @@ sleep 3
 #sleep 1
 
 mcu_send_message "Disabling the ME from transmitting and receiving RF signals."
-sleep 3
+ABORT_SLEEP 3
 
 old_imei=$(READ_IMEI)
 old_imsi=$(READ_IMSI)
+SAVE_KNOWN_GOOD_IMEI "$old_imei"
 
-#CHECK_ABORT
+# The original IMEI is now saved. If the user aborts from here on -- even after
+# the throwaway temporary IMEI is written below -- SAFE_RESTORE_MODEM must put
+# the ORIGINAL identity back, not leave the temporary one. This marker tells it to.
+echo 1 > /run/blue-merle/restore_original
+
+CHECK_STAGE1_ABORT
 
 answer=1
 while [[ "$answer" -eq 1 ]]; do
 	gl_modem AT AT+CFUN=4 | grep -q OK
 	if [[ $? -eq 1 ]]; then
 		mcu_send_message "Disabling failed. Trying again."
-		CHECK_ABORT
+		CHECK_STAGE1_ABORT
 	else
 		answer=0
 		mcu_send_message "Disabled."
@@ -64,10 +90,33 @@ done
 ## We generate a random IMEI to prevent a leak of the
 ## new SIM's IMSI under the old IMEI in case the modem
 ## still talks to the network
+CHECK_STAGE1_ABORT
+echo 1 > /run/blue-merle/imei_write_pending
 timeout 15  python3 /lib/blue-merle/imei_generate.py -r
+temp_imei_rc=$?
 
+if [ "$temp_imei_rc" -ne 0 ]; then
+	mcu_send_message "WARNING:        Temp IMEI write failed. Restoring."
+	logger -p notice -t blue-merle-toggle "stage1 temp IMEI write failed (rc=$temp_imei_rc)"
+	# stage1_committed is still 0 here, so STAGE1_TRAP_CLEANUP runs
+	# SAFE_RESTORE_MODEM for us on the way out.
+	exit 1
+fi
+rm -f /run/blue-merle/imei_write_pending
+
+# Last abort window: the temporary IMEI is written but we have NOT yet asked the
+# user to swap the SIM, so a switch-off here still means "abort" -> restore the
+# original identity. After the message below, a switch-off means "continue".
+CHECK_STAGE1_ABORT
 
 mcu_send_message "Replace the SIM card. Then pull the switch."
 
-echo done > /tmp/blue-merle-stage1
+# Past this point the radio is intentionally left disabled awaiting the
+# physical SIM swap + stage2 -- that is success, not a wedged modem, so the
+# trap above must no longer call SAFE_RESTORE_MODEM. A switch-off now means
+# "SIM swapped, continue to stage2", so drop the abort-window markers.
+stage1_committed=1
+rm -f /run/blue-merle/restore_original /run/blue-merle/abort_requested
+
+echo done > /run/blue-merle/stage1
 logger -p notice -t blue-merle-toggle "Finished with Stage 1"

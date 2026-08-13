@@ -1,12 +1,11 @@
 {
 	"luci-app-blue-merle": {
-		"description": "Grant access to opkg management",
+		"description": "Grant access to blue-merle IMEI/IMSI controls",
 		"read": {
 			"cgi-io": [ "exec" ],
 			"file": {
-				"/usr/libexec/blue-merle": [ "exec" ],
-				"/usr/libexec/blue-merle shred": [ "exec" ],
-				"/usr/libexec/blue-merle *": [ "exec" ],
+				"/usr/libexec/blue-merle read-imei": [ "exec" ],
+				"/usr/libexec/blue-merle read-imsi": [ "exec" ],
 				"/etc/opkg.conf": [ "read" ],
 				"/etc/opkg/*.conf": [ "read" ]
 			},
@@ -16,10 +15,9 @@
 		},
 		"write": {
 			"file": {
-				"/usr/libexec/blue-merle": [ "exec" ],
-				"/usr/libexec/blue-merle shred": [ "exec" ],
-				"/usr/libexec/blue-merle *": [ "exec" ],
-				"/tmp/upload.ipk": [ "write" ]
+				"/usr/libexec/blue-merle random-imei": [ "exec" ],
+				"/usr/libexec/blue-merle shutdown-modem": [ "exec" ],
+				"/usr/libexec/blue-merle shutdown": [ "exec" ]
 			}
 		}
 	}

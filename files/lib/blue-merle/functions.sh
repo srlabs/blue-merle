@@ -2,6 +2,10 @@
 
 # This script provides helper functions for blue-merle
 
+# Rotation control state lives in a root-only dir (0700), not world-writable /tmp
+# (CWE-377 / CWE-379).
+mkdir -p /run/blue-merle && chmod 0700 /run/blue-merle
+
 
 UNICAST_MAC_GEN () {
     loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
@@ -88,17 +92,157 @@ SET_IMEI() {
     local imei="$1"
 
     if [[ ${#imei} -eq 14 ]]; then
-        gl_modem AT AT+EGMR=1,7,${imei}
+        # The IMEI must be quoted, like imei_generate.py's set_imei() does
+        # (AT+EGMR=1,7,"<imei>"); without the quotes the EM060K rejects the
+        # write silently, so an unquoted restore would set nothing.
+        gl_modem AT AT+EGMR=1,7,\"${imei}\"
     else
         echo "IMEI is ${#imei} not 14 characters long"
     fi
 }
 
 CHECK_ABORT () {
-        sim_change_switch=`cat /tmp/sim_change_switch`
+        sim_change_switch=`cat /run/blue-merle/sim_change_switch`
         if [[ "$sim_change_switch" = "off" ]]; then
-                echo '{ "msg": "SIM change      aborted." }' > /dev/ttyS0
+                echo '{ "msg": "SIM change      aborted.        Original restored." }' > /dev/ttyS0
+                logger -p notice -t blue-merle-toggle "switch off during stage1; aborting swap cleanly"
+                SAFE_RESTORE_MODEM
                 sleep 1
                 exit 1
         fi
+
+        # Generic, switch-independent abort request (F-BRICK / CWE-364/665).
+        # The check above only fires while stage1 is running with the
+        # physical switch already flipped back to "off" -- during stage2 the
+        # switch is already "off" by definition (that is what started it), so
+        # it can never signal an abort there. A caller (or a future UI) can
+        # instead `touch /run/blue-merle/abort_requested` at any time; every
+        # CHECK_ABORT call site in either stage will notice it at the next
+        # safe checkpoint, restore the modem, and stop before the next
+        # destructive step.
+        if [ -f /run/blue-merle/abort_requested ]; then
+                rm -f /run/blue-merle/abort_requested
+                echo '{ "msg": "SIM change      aborted.        Original restored." }' > /dev/ttyS0
+                logger -p notice -t blue-merle-toggle "abort_requested set; aborting swap cleanly"
+                SAFE_RESTORE_MODEM
+                sleep 1
+                exit 1
+        fi
+}
+
+# True if the physical mode switch is currently in the OFF position, read
+# directly from the kernel. The GL-E750 wires the slider to gpio-1 (label
+# "switch", ACTIVE LOW): held ON reads "lo", released to OFF reads "hi". Reading
+# the level directly works even while the OFF button-handler is blocked behind
+# stage1's gl-switch lock -- which is why upstream ("we cannot notice the pulled
+# switch") could not implement this.
+#
+# Source: /sys/kernel/debug/gpio. On this platform that is the only userspace
+# read of the *current* level: the line is owned by the gpio-button-hotplug
+# driver, which (unlike mainline gpio-keys) creates no /dev/input device to
+# query, and a claimed line cannot be requested via sysfs or the gpio cdev. If a
+# more stable source is available on a given build (e.g. a gpio-keys input
+# device, or libgpiod against an unclaimed line) this one function is where to
+# swap it in. debugfs is mounted by default on the GL firmware; we make sure,
+# and degrade safely (return non-OFF -> never abort a swap spuriously) if the
+# state still can't be read.
+SWITCH_OFF () {
+        _gp=/sys/kernel/debug/gpio
+        [ -r "$_gp" ] || mount -t debugfs none /sys/kernel/debug 2>/dev/null
+        [ -r "$_gp" ] || return 1
+        _sw=$(grep "|switch" "$_gp" 2>/dev/null | grep -oE " (hi|lo) " | tr -d " ")
+        [ "$_sw" = "hi" ]
+}
+
+# stage1-only abort check: abort if the user pulled the physical switch back to
+# OFF before the SIM-swap handoff, or if a flag-based abort was requested. Must
+# NOT be used in stage2, where the switch is OFF by definition (that is what
+# starts stage2) -- there CHECK_ABORT (flag only) is the right check.
+CHECK_STAGE1_ABORT () {
+        if SWITCH_OFF; then
+                echo '{ "msg": "SIM change      aborted.        Original restored." }' > /dev/ttyS0
+                logger -p notice -t blue-merle-toggle "switch pulled back to OFF during stage1; aborting cleanly"
+                SAFE_RESTORE_MODEM
+                sleep 1
+                exit 1
+        fi
+        CHECK_ABORT
+}
+
+# Sleep up to $1 seconds, but check for an abort (switch pulled or flag) every
+# second so a switch pulled during stage1 is noticed promptly instead of only at
+# the next fixed checkpoint. stage1-only (uses CHECK_STAGE1_ABORT).
+ABORT_SLEEP () {
+        _n="$1"
+        while [ "$_n" -gt 0 ]; do
+                CHECK_STAGE1_ABORT
+                sleep 1
+                _n=$((_n-1))
+        done
+}
+
+# --- Recovery from an aborted or failed IMEI write (F-BRICK, CWE-364/665) ---
+#
+# Pulling the SIM/module, or an AT/EGMR write failing partway through,
+# can otherwise leave the modem wedged: SIM power off, radio disabled
+# (CFUN=4), and no confirmed IMEI. The two helpers below let a stage
+# remember the last known-good, already-confirmed IMEI before it attempts
+# to change it, and put the modem back into a known-good state (SIM
+# powered, radio enabled, previous IMEI restored if the new write was
+# never confirmed) whenever a stage aborts, fails, or exits unexpectedly.
+
+# Record the last confirmed-good IMEI in a shell variable only (process
+# memory) -- never write the identifier to the filesystem. /run/blue-merle is
+# on the root overlay (UBIFS/flash) on this hardware, not tmpfs, and rm cannot
+# securely erase there, so a file would leave a recoverable IMEI on flash.
+# SAFE_RESTORE_MODEM always runs in the same shell (guard or EXIT trap), so an
+# in-memory value is enough to roll back to.
+SAVE_KNOWN_GOOD_IMEI () {
+        BM_KNOWN_GOOD_IMEI="$1"
+}
+
+# Bring the modem back to a known-good state. Safe to call more than once
+# and safe to call even if nothing was actually in progress.
+SAFE_RESTORE_MODEM () {
+        logger -p notice -t blue-merle-toggle "SAFE_RESTORE_MODEM: restoring modem state"
+
+        # Make sure the SIM is powered regardless of where we got interrupted.
+        sim_switch on >/dev/null 2>&1
+
+        # Restore the last known-good IMEI (kept in memory, never on disk) if
+        # either an EGMR write was left unconfirmed (imei_write_pending) or the
+        # user aborted stage1 after it had already written its throwaway
+        # temporary IMEI (restore_original). In both cases we want the ORIGINAL
+        # identity back, not a half-written or temporary value.
+        if [ -f /run/blue-merle/imei_write_pending ] || [ -f /run/blue-merle/restore_original ]; then
+                if [ -n "$BM_KNOWN_GOOD_IMEI" ]; then
+                        # EGMR writes are only accepted with the radio disabled,
+                        # so force CFUN=4 before restoring (sim_switch on above may
+                        # have re-enabled it); the CFUN=1 step below brings it back.
+                        gl_modem AT AT+CFUN=4 >/dev/null 2>&1
+                        # AT+EGMR=1,7 takes the 14-digit IMEI body and recomputes
+                        # the Luhn check digit itself; READ_IMEI returns the full
+                        # 15 digits, so write the first 14 (same body reproduces
+                        # the identical IMEI). Passing 15 would be rejected by
+                        # SET_IMEI's length check and silently restore nothing.
+                        restore_imei=$(printf '%s' "$BM_KNOWN_GOOD_IMEI" | cut -c1-14)
+                        SET_IMEI "$restore_imei" >/dev/null 2>&1
+                fi
+                rm -f /run/blue-merle/imei_write_pending /run/blue-merle/restore_original
+        fi
+
+        # Re-enable full functionality so the modem attaches again instead
+        # of being left disabled (CFUN=4).
+        restore_tries=3
+        while [ $restore_tries -gt 0 ]; do
+                gl_modem AT AT+CFUN=1 | grep -q OK && break
+                restore_tries=$((restore_tries-1))
+                sleep 1
+        done
+
+        # Don't let a stray reboot believe an interrupted stage1 completed, and
+        # clear the abort marker so nothing leaks into the next run.
+        rm -f /run/blue-merle/stage1 /run/blue-merle/abort_requested
+
+        logger -p notice -t blue-merle-toggle "SAFE_RESTORE_MODEM: done"
 }
