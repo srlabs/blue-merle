@@ -42,6 +42,45 @@ elif [ "$1" == "shutdown" ]; then
 elif [ "$1" == "write-imei" ]; then
     new_imei=$2
     echo -n  { "action": "write" }
+
+elif [ "$1" == "mac-status" ]; then
+    echo "mimic=$(uci -q get blue-merle.mac.mimic)"
+    echo "mode=$(MAC_MODE)"
+    if GL_NATIVE_MAC_RANDOM_ACTIVE; then echo "native=1"; else echo "native=0"; fi
+    echo "ap_vendors=$(uci -q get blue-merle.mac.ap_vendors)"
+    echo "client_vendors=$(uci -q get blue-merle.mac.client_vendors)"
+    echo "ap_all=$(MAC_LIST_VENDORS ap)"
+    echo "client_all=$(MAC_LIST_VENDORS client)"
+
+elif [ "$1" == "mac-on" ]; then
+    uci set blue-merle.mac.mimic='1'; uci commit blue-merle; echo -n "1"
+
+elif [ "$1" == "mac-off" ]; then
+    uci set blue-merle.mac.mimic='0'; uci commit blue-merle; echo -n "0"
+
+elif [ "$1" == "mac-set-ap" ]; then
+    uci set blue-merle.mac.ap_vendors="$2"; uci commit blue-merle; echo -n "$2"
+
+elif [ "$1" == "mac-set-client" ]; then
+    uci set blue-merle.mac.client_vendors="$2"; uci commit blue-merle; echo -n "$2"
+
+elif [ "$1" == "mac-set-mode" ]; then
+    uci set blue-merle.mac.mode="$2"; uci commit blue-merle; echo -n "$2"
+
+elif [ "$1" == "mac-preview" ]; then
+    # Show every interface's next MAC, without changing anything.
+    MAC_BASE_INIT
+    echo "wifi0(2.4G)=$(GEN_MAC ap 0)"
+    echo "wifi1(5G)=$(GEN_MAC ap 1)"
+    echo "wan=$(GEN_MAC client 2)"
+    echo "clone=$(GEN_MAC client 3)"
+
+elif [ "$1" == "mac-apply" ]; then
+    RESET_BSSIDS
+    RANDOMIZE_MACADDR
+    logger -p notice -t blue-merle-libexec "MAC mimicry applied (reload wifi/network to take effect)"
+    echo -n "applied"
+
 else
     echo -n   '{"msg":"Hello, World!"}'
     #echo 'foo'>&2

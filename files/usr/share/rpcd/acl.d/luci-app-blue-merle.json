@@ -7,6 +7,8 @@
 				"/usr/libexec/blue-merle": [ "exec" ],
 				"/usr/libexec/blue-merle shred": [ "exec" ],
 				"/usr/libexec/blue-merle *": [ "exec" ],
+				"/usr/libexec/blue-merle mac-status": [ "exec" ],
+				"/usr/libexec/blue-merle mac-preview": [ "exec" ],
 				"/etc/opkg.conf": [ "read" ],
 				"/etc/opkg/*.conf": [ "read" ]
 			},
@@ -19,6 +21,12 @@
 				"/usr/libexec/blue-merle": [ "exec" ],
 				"/usr/libexec/blue-merle shred": [ "exec" ],
 				"/usr/libexec/blue-merle *": [ "exec" ],
+				"/usr/libexec/blue-merle mac-on": [ "exec" ],
+				"/usr/libexec/blue-merle mac-off": [ "exec" ],
+				"/usr/libexec/blue-merle mac-set-ap *": [ "exec" ],
+				"/usr/libexec/blue-merle mac-set-client *": [ "exec" ],
+				"/usr/libexec/blue-merle mac-set-mode *": [ "exec" ],
+				"/usr/libexec/blue-merle mac-apply": [ "exec" ],
 				"/tmp/upload.ipk": [ "write" ]
 			}
 		}
