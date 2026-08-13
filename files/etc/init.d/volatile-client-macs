@@ -7,24 +7,38 @@
 
 # We want to run ahead of "gl-tertf" which, currently, has a prioprity of 60.
 # We also want to run ahead of "gl_clients" which has 99.
-START=9
+START=09
 STOP=99
 
-start() {
-    tmpdir="$(mktemp -d)"
-    # We mount a tmpfs so that the client database will be stored in memory only
-    mount -t tmpfs / "$tmpdir"
-    cp -a /etc/oui-tertf/client.db "$tmpdir"
-    shred --force --remove  /etc/oui-tertf/client.db ||  rm -f /etc/oui-tertf/client.db
-    # If this script runs multiple times, we accumulate mounts; we try to avoid having mounts over mounts, so we unmount any existing tmpfs
-    umount -t tmpfs -l /etc/oui-tertf
+DIR=/etc/oui-tertf
+DB=$DIR/client.db
 
-    mount -t tmpfs / /etc/oui-tertf
-    cp -a "$tmpdir/client.db" /etc/oui-tertf/client.db
-    umount -t tmpfs -l "$tmpdir"
+_mounted() { mount 2>/dev/null | grep -q " on $DIR type tmpfs"; }
+
+start() {
+	_mounted && return 0
+
+	# Preserve the current DB in RAM (/tmp is tmpfs) so gl-tertf keeps working.
+	tmp=$(mktemp)
+	[ -f "$DB" ] && cp -a "$DB" "$tmp" 2>/dev/null
+
+	# One-time removal of the on-flash copy (single unlink, not a per-boot shred).
+	rm -f "$DB" 2>/dev/null
+
+	if ! mount -t tmpfs -o mode=0755,size=1M tmpfs "$DIR"; then
+		logger -p err -t volatile-client-macs "tmpfs mount FAILED — leaving DB on flash"
+		[ -f "$tmp" ] && cp -a "$tmp" "$DB"
+		rm -f "$tmp"
+		return 1
+	fi
+
+	[ -f "$tmp" ] && cp -a "$tmp" "$DB"
+	rm -f "$tmp"
+	logger -p notice -t volatile-client-macs "tmpfs mounted over $DIR (client MACs RAM-only)"
 }
+
+boot() { start "$@"; }
 
 stop() {
-	shred /etc/oui-tertf/client.db ||  rm -f /etc/oui-tertf/client.db
+	umount "$DIR" 2>/dev/null
 }
-
