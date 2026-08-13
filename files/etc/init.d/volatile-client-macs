@@ -1,24 +1,12 @@
 #!/bin/sh /etc/rc.common
-# Keep the connected-client MAC database in RAM, never on flash.
-#
-# gl-tertf / gl_clients record the MAC addresses of connected clients in a sqlite
-# database at /etc/oui-tertf/client.db, on the UBIFS overlay — a persistent log of
-# which devices attached to the router. The previous version shred+rm'd that file
-# on every start and stop. That hammers the NAND (see #73) and, because UBIFS is
-# log-structured, still cannot truly erase the old blocks: an in-place overwrite
-# just allocates a new block and leaves the previous content recoverable.
-#
-# Instead we mount a small tmpfs over /etc/oui-tertf, so the database lives only in
-# RAM: nothing about connected clients is written to flash and the log is gone on
-# reboot. The current database is copied in once so gl-tertf keeps working; the
-# on-flash copy is removed a single time (one unlink — shred buys nothing on UBIFS,
-# same reasoning as the eSIM path).
-#
-# /etc/config/fstab was proposed in #73, but it does not load at boot on the
-# GL-E750 (the GL firmware does not process it there — reported on 4.3.26 and
-# 4.8.3), so an init script is used.
-#
-# Run ahead of gl-tertf (priority 60) and gl_clients (99).
+
+# MAC addresses of connected clients are stored in a sqlite database.
+# Having the database seems to be necessary for the device to be working properly.
+# We intent to have the device store the database in RAM rather than on flash.
+# We replace the directory with a memory-backed tmpfs which is as volatile as we can make it.
+
+# We want to run ahead of "gl-tertf" which, currently, has a prioprity of 60.
+# We also want to run ahead of "gl_clients" which has 99.
 START=09
 STOP=99
 
