@@ -114,7 +114,7 @@ def generate_imei(imei_prefix, imsi_d):
     random_part_length = imei_length - len(imei)
     if (verbose):
         print(f"Length of the random IMEI part: {random_part_length}")
-    imei += "".join(random.sample(string.digits, random_part_length))
+    imei += "".join(random.choices(string.digits, k=random_part_length))
     if (verbose):
         print(f"IMEI without validation digit: {imei}")
 
