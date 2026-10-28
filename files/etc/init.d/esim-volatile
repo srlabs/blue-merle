@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+# Keep /root/esim (IMEI file, LPA log) in RAM; only db/ (eSIM profiles) stays on flash.
+
+# Run before blue-merle (10) and the LPA.
+START=08
+STOP=99
+
+VOL=/root/esim
+PERSIST=/etc/blue-merle/esim-db
+
+_mounted() { mount 2>/dev/null | grep -q " on $VOL type tmpfs"; }
+
+start() {
+    _mounted && return 0
+    mkdir -p "$PERSIST" "$VOL"
+
+    # Copy existing eSIM profiles once.
+    if [ -d "$VOL/db" ] && [ ! -e "$PERSIST/.migrated" ]; then
+        cp -a "$VOL/db/." "$PERSIST/" 2>/dev/null
+        : > "$PERSIST/.migrated"
+    fi
+
+    _ver=""
+    [ -f "$VOL/ver" ] && _ver=$(cat "$VOL/ver" 2>/dev/null)
+
+    mount -t tmpfs -o mode=0700,size=4M tmpfs "$VOL" || {
+        logger -p err -t esim-volatile "tmpfs mount FAILED — falling back to flash"
+        return 1
+    }
+    mkdir -p "$VOL/db"
+    mount --bind "$PERSIST" "$VOL/db" 2>/dev/null
+    [ -n "$_ver" ] && printf '%s' "$_ver" > "$VOL/ver"
+    logger -p notice -t esim-volatile "tmpfs mounted over $VOL"
+}
+
+stop() {
+    umount "$VOL/db" 2>/dev/null
+    umount "$VOL" 2>/dev/null
+}
