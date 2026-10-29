@@ -95,6 +95,8 @@ define Package/blue-merle/postinst
 
 	/etc/init.d/gl_clients start
 
+	/etc/init.d/esim-volatile enable
+
 	echo {\"msg\": \"Successfully installed Blue Merle\"} > /dev/ttyS0
 endef
 
