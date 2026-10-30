@@ -17,6 +17,37 @@ RESET_BSSIDS () {
     # you need to reset wifi for changes to apply, i.e. executing "wifi"
 }
 
+# first names from the most common "<name>’s iPhone" SSIDs in WiGLE's SSID statistics
+SSID_NAMES="Michael Daniel James David Andrew Alex Sarah Ryan Mark Robert
+    Paul Jason Matthew Chris Jessica Mike Ashley Brian Adam Matt Richard
+    Amanda Laura Lisa Emily Amy Eric Anthony Ben Peter Christopher William
+    Steve Jonathan Nick Nicole Melissa Josh Justin Stephanie Lauren Emma
+    Ali Tom Rachel Joe Joshua Anna Steven Jack"
+
+# print name number $1 (counting from 0) from SSID_NAMES
+SSID_NAME () {
+    i=$1
+    set -- $SSID_NAMES
+    shift $i
+    echo "$1"
+}
+
+# give the Wi-Fi networks new phone hotspot style names, used on IMEI change;
+# guest networks get a different name, like a second phone
+RESET_SSIDS () {
+    [ "$(uci -q get blue-merle.wifi.ssid)" = "1" ] || return 0
+    set -- $SSID_NAMES
+    main=$(( $(hexdump -n2 -e '/2 "%u"' /dev/urandom) % $# ))
+    guest=$(( (main + 1 + $(hexdump -n2 -e '/2 "%u"' /dev/urandom) % ($# - 1)) % $# ))
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.mode)" = "ap" ] || continue
+        n=$main
+        [ "$(uci -q get wireless.$s.guest)" = "1" ] && n=$guest
+        uci set wireless.$s.ssid="$(SSID_NAME $n)’s iPhone"
+    done
+    uci commit wireless
+}
+
 
 RANDOMIZE_MACADDR () {
     # This changes the MAC address clients see when connecting to the WiFi spawned by the device.

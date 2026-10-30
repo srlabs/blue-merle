@@ -151,6 +151,14 @@ Connecting devices' MAC addresses are stored persistently within the Mudi router
 
 *Blue-merle* sets a randomized MAC address for the WAN interface. If you use the device in repeater mode to connect to another WiFI AP, the Mudi's MAC address will change after every boot. This might interfere with MAC filtering if enabled on the upstream WiFi AP.
 
+### Wi-Fi name (SSID) change on IMEI change (optional)
+
+The default SSID `GL-E750-…` identifies the device and links its randomized BSSIDs together in wardriving databases. With `wifi.ssid` enabled, every IMEI change renames the Wi-Fi to `<first name>’s iPhone`, the most common personal form of iPhone hotspot names in [WiGLE's SSID statistics](https://wigle.net/csv/ssid.csv), with the first name picked from the 50 most common there. A guest network gets a different name, like a second phone. The name stays until the next IMEI change; the BSSID still changes on every boot.
+
+To turn it on, run `uci set blue-merle.wifi=wifi; uci set blue-merle.wifi.ssid=1; uci commit blue-merle`. Your devices have to reconnect after each IMEI change.
+
+For the name to fit, use only the 5 GHz band, as iPhone hotspots do by default. This only helps against filtering by SSID in mass databases: the beacon still doesn't look like an iPhone's (no Apple vendor element, no 802.11ax), and it doesn't help against a targeted adversary.
+
 ## Acknowledgement: blue merle
 
 The Mudi device shares a name with a Hungarian dog breed typically used to guard and herd flocks of livestock. Mudi dogs are agile, fast-learners and extremely friendly.
