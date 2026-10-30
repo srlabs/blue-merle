@@ -137,6 +137,8 @@ This process can be observed in Figure 1, where there is a large break in connec
 
 ### Basic Service Set Identifier (BSSID) randomization
 
+Every access point the Mudi runs gets a new BSSID, including guest networks, which otherwise use the radio's factory address.
+
 The Mudi router BSSID is set by the hostapd process using the `mac80211_prepare_vif()` function in `/rom/lib/netifd/wireless/mac80211.sh`. The resulting BSSID is stored in `/etc/config/wireless`.
 
 The implemented BSSID randomization function generates a valid unicast address value and overrides the current MAC values set within the `wlan0` and `wlan1` interfaces. This is done by issuing OpenWrt uci set commands targeting the macaddr fields of `wireless.@wifi-iface[0]` and `wireless.@wifi-iface[1]`. The Mudi router's wifi is then reset to implement the changes.
