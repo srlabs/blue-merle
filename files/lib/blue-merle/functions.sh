@@ -3,8 +3,10 @@
 # This script provides helper functions for blue-merle
 
 
+# random unicast address with the locally administered bit set, like the
+# randomized addresses phones use for their hotspots
 UNICAST_MAC_GEN () {
-    loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111:0x}'.zfill(12))"`
+    loc_mac_numgen=`python3 -c "import random; print(f'{random.randint(0,2**48) & 0b111111101111111111111111111111111111111111111111 | 1 << 41:0x}'.zfill(12))"`
     loc_mac_formatted=$(echo "$loc_mac_numgen" | sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\)\(..\).*$/\1:\2:\3:\4:\5:\6/')
     echo "$loc_mac_formatted"
 }

@@ -139,9 +139,11 @@ This process can be observed in Figure 1, where there is a large break in connec
 
 The Mudi router BSSID is set by the hostapd process using the `mac80211_prepare_vif()` function in `/rom/lib/netifd/wireless/mac80211.sh`. The resulting BSSID is stored in `/etc/config/wireless`.
 
-The implemented BSSID randomization function generates a valid unicast address value and overrides the current MAC values set within the `wlan0` and `wlan1` interfaces. This is done by issuing OpenWrt uci set commands targeting the macaddr fields of `wireless.@wifi-iface[0]` and `wireless.@wifi-iface[1]`. The Mudi router's wifi is then reset to implement the changes.
+The implemented BSSID randomization function generates a valid unicast address value with the locally administered bit set, as phones do for their hotspots, and overrides the current MAC values set within the `wlan0` and `wlan1` interfaces. This is done by issuing OpenWrt uci set commands targeting the macaddr fields of `wireless.@wifi-iface[0]` and `wireless.@wifi-iface[1]`. The Mudi router's wifi is then reset to implement the changes.
 
 The BSSID randomization feature is run on boot, ensuring that a new BSSID is generated each time the device is started.
+
+To blend in further on the move, use a single band, WPA2 (or WPA2/WPA3 mixed mode) and set the Wi-Fi country code to the country you are in. The SSID still shows `GL-E750-…` unless you change it.
 
 ### MAC address log wiping
 
