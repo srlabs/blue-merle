@@ -11,8 +11,11 @@ UNICAST_MAC_GEN () {
 
 # randomize BSSID
 RESET_BSSIDS () {
-    uci set wireless.@wifi-iface[1].macaddr=`UNICAST_MAC_GEN`
-    uci set wireless.@wifi-iface[0].macaddr=`UNICAST_MAC_GEN`
+    # every access point, including guest networks
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.mode)" = "ap" ] || continue
+        uci set wireless.$s.macaddr=`UNICAST_MAC_GEN`
+    done
     uci commit wireless
     # you need to reset wifi for changes to apply, i.e. executing "wifi"
 }
