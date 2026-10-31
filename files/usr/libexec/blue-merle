@@ -28,6 +28,7 @@ elif [ "$1" == "read-imsi" ]; then
 
 elif [ "$1" == "random-imei" ]; then
     flock -n /tmp/blue-merle-imei-generate.lock  timeout 15  /lib/blue-merle/imei_generate.py --random
+    IPHONE_CHANNEL "$(gl_modem AT AT+CIMI | grep -o -w -E "[0-9]{6,15}")"
     READ_IMEI
 
 elif [ "$1" == "shutdown-modem" ]; then

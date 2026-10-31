@@ -57,6 +57,7 @@ else
 	# prevent imei leak via the LPA
 	echo "$new_imei" > /root/esim/imei
 	shred -u /root/esim/log.txt # unclear if the imei/imsi will be loged here, just a precaution
+	IPHONE_CHANNEL "$new_imsi"
 fi
 
 logger -p notice -t blue-merle-toggle "Changed IMEI from ${old_imei} to ${new_imei}"
