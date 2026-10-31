@@ -17,6 +17,56 @@ RESET_BSSIDS () {
     # you need to reset wifi for changes to apply, i.e. executing "wifi"
 }
 
+# iPhone hotspots use one band, 5 GHz by default, with WPA2/WPA3 mixed and optional
+# management frame protection; turn off 2.4 GHz access points if a 5 GHz one is
+# enabled, a guest network on 2.4 GHz moves to 5 GHz
+IPHONE_RADIO () {
+    five=0
+    guest_on=0
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.mode)" = "ap" ] || continue
+        dev=$(uci -q get wireless.$s.device)
+        case "$(uci -q get wireless.$dev.band)$(uci -q get wireless.$dev.hwmode)" in
+            *5g*|*11a*)
+                uci set wireless.$s.encryption=sae-mixed
+                uci set wireless.$s.ieee80211w=1
+                [ "$(uci -q get wireless.$s.disabled)" = "1" ] || [ "$(uci -q get wireless.$dev.disabled)" = "1" ] || five=1;;
+        esac
+    done
+    [ $five = 1 ] || return 0
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.mode)" = "ap" ] || continue
+        dev=$(uci -q get wireless.$s.device)
+        case "$(uci -q get wireless.$dev.band)$(uci -q get wireless.$dev.hwmode)" in
+            *5g*|*11a*) ;;
+            *)
+                [ "$(uci -q get wireless.$s.guest)" = "1" ] && [ "$(uci -q get wireless.$s.disabled)" != "1" ] && guest_on=1
+                uci set wireless.$s.disabled=1;;
+        esac
+    done
+    [ $guest_on = 1 ] || return 0
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.guest)" = "1" ] || continue
+        dev=$(uci -q get wireless.$s.device)
+        case "$(uci -q get wireless.$dev.band)$(uci -q get wireless.$dev.hwmode)" in
+            *5g*|*11a*) uci set wireless.$s.disabled=0;;
+        esac
+    done
+}
+
+# with a German SIM (MCC 262), use channel 44 on 5 GHz like iPhone hotspots there;
+# used on IMEI change, $1 is the IMSI of the SIM, only its country code is used
+IPHONE_CHANNEL () {
+    [ "$(uci -q get blue-merle.wifi.ssid)" = "iphone" ] || return 0
+    case "$1" in 262*) ;; *) return 0;; esac
+    for dev in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-device$/\1/p'); do
+        case "$(uci -q get wireless.$dev.band)$(uci -q get wireless.$dev.hwmode)" in
+            *5g*|*11a*) uci set wireless.$dev.channel=44;;
+        esac
+    done
+    uci commit wireless
+}
+
 # with blue-merle.wifi.ssid=iphone, give the Wi-Fi networks the most common iPhone
 # hotspot name; guest networks get the name iOS gives a second iPhone
 RESET_SSIDS () {
@@ -29,6 +79,7 @@ RESET_SSIDS () {
             uci set wireless.$s.ssid="iPhone"
         fi
     done
+    IPHONE_RADIO
     uci commit wireless
 }
 

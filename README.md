@@ -157,6 +157,8 @@ The default SSID `GL-E750-…` identifies the device and links its randomized BS
 
 To turn it on, run `uci set blue-merle.wifi=wifi; uci set blue-merle.wifi.ssid=iphone; uci commit blue-merle` and reboot.
 
+The radio settings follow iPhone hotspots too: if a 5 GHz access point is enabled, 2.4 GHz access points are turned off and a guest network moves to 5 GHz, and 5 GHz networks use WPA2/WPA3 mixed (`sae-mixed`) with optional management frame protection. With a German SIM, the IMEI change also sets the 5 GHz channel to 44, which iPhone hotspots use in Germany. Devices that only support 2.4 GHz can't connect while this is on.
+
 This only helps against filtering by SSID in mass databases: the beacon still doesn't look like an iPhone's (no Apple vendor element, no 802.11ax), and it doesn't help against a targeted adversary.
 
 ## Acknowledgement: blue merle
