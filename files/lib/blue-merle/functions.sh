@@ -17,6 +17,21 @@ RESET_BSSIDS () {
     # you need to reset wifi for changes to apply, i.e. executing "wifi"
 }
 
+# with blue-merle.wifi.ssid=iphone, give the Wi-Fi networks the most common iPhone
+# hotspot name; guest networks get the name iOS gives a second iPhone
+RESET_SSIDS () {
+    [ "$(uci -q get blue-merle.wifi.ssid)" = "iphone" ] || return 0
+    for s in $(uci -q show wireless | sed -n 's/^wireless\.\([^.=]*\)=wifi-iface$/\1/p'); do
+        [ "$(uci -q get wireless.$s.mode)" = "ap" ] || continue
+        if [ "$(uci -q get wireless.$s.guest)" = "1" ]; then
+            uci set wireless.$s.ssid="iPhone (2)"
+        else
+            uci set wireless.$s.ssid="iPhone"
+        fi
+    done
+    uci commit wireless
+}
+
 
 RANDOMIZE_MACADDR () {
     # This changes the MAC address clients see when connecting to the WiFi spawned by the device.
