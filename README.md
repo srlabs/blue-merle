@@ -22,7 +22,7 @@ A MCU version >= 1.0.7 is required. The MCU may be updated through the *blue-mer
 
 The online install method requires an **active Internet connection** on your Mudi device to **download up-to-date dependencies**.
 
-Download the [prebuilt v2.0 release package](https://github.com/srlabs/blue-merle/releases/download/v2.0/blue-merle_2.0.0-0_mips_24kc.ipk) and copy it onto your Mudi (e.g. via `scp`), preferably into the `/tmp` folder. Then install the package file:
+Download the [latest release package](https://github.com/srlabs/blue-merle/releases/latest) and copy it onto your Mudi (e.g. via `scp`), preferably into the `/tmp` folder. Then install the package file:
 
 ```sh
 opkg update
@@ -37,12 +37,12 @@ opkg install --force-reinstall blue-merle*.ipk
 
 The offline install method does **not need an active Internet connection** on your Mudi device.
 
-Download the [prebuilt v2.0 offline release package](https://github.com/srlabs/blue-merle/releases/download/v2.0/blue-merle_2.0.0-0_offline_install.zip), then execute the following commands:
+Download `blue-merle_<version>_offline_install.zip` from the [releases page](https://github.com/srlabs/blue-merle/releases), or build it from a release package with `offline/build.sh blue-merle_<version>_mips_24kc.ipk`. Then execute the following commands:
 
 ```sh
 ## Execute the following commands on the computer connected to the Mudi via WiFi / LAN
 
-unzip /path/to/downloaded.zip
+unzip /path/to/blue-merle_<version>_offline_install.zip
 
 # Copy the offline release package to your Mudi
 # -O might be needed due to SSH daemon used by Mudi
@@ -52,12 +52,10 @@ scp -O -r blue_merle_install root@192.168.8.1:/tmp
 ssh root@192.168.8.1
 
 ## Execute the following commands inside the SSH tunnel
-# Install dependencies and blue-merle
-cd /tmp/blue_merle_install
-./install.sh
+sh /tmp/blue_merle_install/install.sh
 ```
 
-**Note**: The offline install package bundles dependencies collected in October 2023. These dependencies could be outdated at the time of installation and might not be compatible with future Mudi firmware versions.
+Firmware 4.3.30 no longer has LuCI preinstalled; `install.sh` then installs it from the firmware first. After the installation it starts `blue-merle` to change the IMEI, which ends with the device shutting down.
 
 ## Usage
 

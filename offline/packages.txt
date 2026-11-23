@@ -1,0 +1,10 @@
+# Dependencies of blue-merle the GL firmware doesn't ship, as files in GL's feed.
+# luci-base comes with the firmware: built in up to 4.3.26, in /etc/luci_ipks from 4.3.30.
+coreutils_9.0-2_mips_24kc.ipk
+coreutils-shred_9.0-2_mips_24kc.ipk
+libbz2-1.0_1.0.8-1_mips_24kc.ipk
+libffi_3.4.2-2_mips_24kc.ipk
+libpython3-3.10_3.10.9-1_mips_24kc.ipk
+python3-base_3.10.9-1_mips_24kc.ipk
+python3-light_3.10.9-1_mips_24kc.ipk
+python3-pyserial_3.4-2_mips_24kc.ipk
