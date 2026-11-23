@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build-packages:
     name: Build Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     env:
